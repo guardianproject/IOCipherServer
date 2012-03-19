@@ -1,7 +1,8 @@
+A secure web server for accessing IOCipher-based encrypted storage file systems
+via a web HTML interface or a mountable WebDav service.
 
-A secure web server for accessing IOCipher-based encrypted storage file systems via a web HTML interface or a mountable WebDav service.
-
-Includes ability to enable HTTPS/SSL support in server by autogenerating a local, self-signed SSL keypair and certificate.
+Includes ability to enable HTTPS/SSL support in server by autogenerating a local,
+self-signed SSL keypair and certificate.
 
 Utilizes:
 
