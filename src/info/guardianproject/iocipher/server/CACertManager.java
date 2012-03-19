@@ -151,11 +151,12 @@ public class CACertManager {
     	ksCACert.store(trustStoreStream, password.toCharArray());
     }
     
-    public String getFingerprint (X509Certificate cert, String type)
+    public String getFingerprint (Certificate cert, String type)
     {
     	 try {
+    		 
              MessageDigest md = MessageDigest.getInstance(type);
-             byte[] publicKey = md.digest(cert.getPublicKey().getEncoded());
+             byte[] publicKey = md.digest(cert.getEncoded());
 
              StringBuffer hexString = new StringBuffer();
              for (int i=0;i<publicKey.length;i++) {
@@ -170,7 +171,7 @@ public class CACertManager {
 
              	return hexString.toString();
 
-         } catch (NoSuchAlgorithmException e1) {
+         } catch (Exception e1) {
              e1.printStackTrace();
              return null;
          } 

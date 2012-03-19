@@ -32,8 +32,6 @@ public static void generateKeyStore(File keyStoreFile, String alias, int keyLeng
 
         // Generate the key store de type JCEKS
         Provider[] ps = Security.getProviders();
-        for (int i = 0; i < ps.length; i++)
-            System.out.println("" + ps[i].getName());
 
         final KeyStore ks = KeyStore.getInstance("BKS");
         ks.load(null);
@@ -52,7 +50,6 @@ public static void generateKeyStore(File keyStoreFile, String alias, int keyLeng
                 keyStoreFile);
         ks.store(fos, pw);
         fos.close();
-        System.out.println(keyStoreFile.getAbsolutePath());
 
    
 }

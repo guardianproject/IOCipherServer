@@ -11,8 +11,9 @@
         android:layout_height="wrap_content"
         android:text="@string/hello" 
         android:padding="10sp"
-        android:textSize="12pt"
+        android:textSize="10pt"
         />
+   
 
     <ToggleButton
         android:id="@+id/toggleButton1"
@@ -20,8 +21,17 @@
         android:layout_height="wrap_content"
         android:text="@string/btnserv"
                 android:padding="10sp"
-                android:textSize="12pt"
+                android:textSize="10pt"
         
          />
+    
+     <TextView
+         android:id="@+id/textStatus"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="" 
+        android:padding="10sp"
+        android:textSize="10pt"
+        />
 
 </LinearLayout>

@@ -1,6 +1,14 @@
 package info.guardianproject.iocipher.server;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.util.Enumeration;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -8,6 +16,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
+import android.widget.TextView;
 import android.widget.ToggleButton;
 
 public class IOCipherServerActivity extends Activity {
@@ -43,7 +52,7 @@ public class IOCipherServerActivity extends Activity {
         Intent intent = new Intent(this, WebServerService.class);
 		startService(intent);
 		
-		
+		showStatus();
     }
     
     public void stopWebServer ()
@@ -53,7 +62,38 @@ public class IOCipherServerActivity extends Activity {
    		
     }
     
+    private void showStatus ()
+    {
+    	TextView tv = (TextView)findViewById(R.id.textStatus);
     
+    	String ip = getLocalIpAddress();
+    	String fingerprint = "";
+    	
+    	File fileKS = new File(this.getFilesDir(),"iocipher.bks");
+		String password = "changeme";
+		String alias = "twjs";
+		
+		CACertManager ccm = new CACertManager();
+		try {
+			ccm.load(fileKS.getAbsolutePath(), password);
+			fingerprint = ccm.getFingerprint(ccm.getCertificateChain(alias)[0], "SHA1");
+			
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	
+    	if (ip != null)
+    	{
+    		tv.setText("Browser:\nhttps://" + ip + ":8888" 
+    				+ "\n\n" +
+    				
+    				"WebDav (Secure):\nhttps://" + ip + ":8888/files"
+    				+ "\n\n" +
+    				"SHA1: " + fingerprint
+    				);
+    	}
+    }
     
 	@Override
 	protected void onStart() {
@@ -62,5 +102,21 @@ public class IOCipherServerActivity extends Activity {
 		
 	}
 
+	public String getLocalIpAddress() {
+	    try {
+	        for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
+	            NetworkInterface intf = en.nextElement();
+	            for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
+	                InetAddress inetAddress = enumIpAddr.nextElement();
+	                if (!inetAddress.isLoopbackAddress()) {
+	                    return inetAddress.getHostAddress().toString();
+	                }
+	            }
+	        }
+	    } catch (SocketException ex) {
+	        Log.e(TAG, ex.toString());
+	    }
+	    return null;
+	}
 		
 }
