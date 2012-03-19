@@ -1,13 +1,27 @@
+/** Description **/
+
 A secure web server for accessing IOCipher-based encrypted storage file systems
 via a web HTML interface or a mountable WebDav service.
 
 Includes ability to enable HTTPS/SSL support in server by autogenerating a local,
 self-signed SSL keypair and certificate.
 
-Utilizes:
+/**** Includes ****/
 
 Tiny Java Web Server
 http://tjws.sourceforge.net/
 
 Milton: Java WebDav API
 http://milton.ettrema.com/
+
+SpongyCastle (BouncyCastle repackaged)
+https://github.com/rtyley/spongycastle
+
+Simple Logging Facade for java
+http://www.slf4j.org/
+
+Apache Commons (IO, File Utils)
+http://commons.apache.org/
+
+JDOM
+http://jdom.org
