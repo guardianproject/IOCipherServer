@@ -6,6 +6,9 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
+import android.widget.ToggleButton;
 
 public class IOCipherServerActivity extends Activity {
 	
@@ -18,10 +21,36 @@ public class IOCipherServerActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         
+        ToggleButton tButton = (ToggleButton)findViewById(R.id.toggleButton1);
+        tButton.setOnCheckedChangeListener(new OnCheckedChangeListener () {
+
+			@Override
+			public void onCheckedChanged(CompoundButton buttonView,
+					boolean isChecked) {
+				
+				if (isChecked)
+					startWebServer();
+				else
+					stopWebServer();
+				
+			}
+        	
+        });
+    }
+    
+    public void startWebServer ()
+    {
         Intent intent = new Intent(this, WebServerService.class);
 		startService(intent);
 		
 		
+    }
+    
+    public void stopWebServer ()
+    {
+    	Intent intent = new Intent(this, WebServerService.class);
+   		stopService(intent);
+   		
     }
     
     

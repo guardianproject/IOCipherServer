@@ -92,16 +92,17 @@ public class WebServerService extends Service implements Runnable
 	
 	public void stopServer ()
 	{
-		srv.notifyStop();
 		srv.destroyAllServlets();
+		
+		srv.notifyStop();
+		srv = null;
 	}
 
+
 	@Override
-	public void onStart(Intent intent, int startId) {
-		super.onStart(intent, startId);
-		
-		
-		
+	public void onDestroy() {
+		super.onDestroy();
+		stopServer ();
 	}
 
 	@Override
