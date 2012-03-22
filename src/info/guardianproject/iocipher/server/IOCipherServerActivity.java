@@ -52,6 +52,8 @@ public class IOCipherServerActivity extends Activity {
         Intent intent = new Intent(this, WebServerService.class);
 		startService(intent);
 		
+		//this.bindService(service, conn, flags)
+		
 		showStatus();
     }
     

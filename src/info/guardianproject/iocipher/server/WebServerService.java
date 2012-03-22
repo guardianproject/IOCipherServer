@@ -3,6 +3,7 @@ package info.guardianproject.iocipher.server;
 
 import java.io.File;
 
+import android.app.Notification;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
@@ -43,6 +44,8 @@ public class WebServerService extends Service implements Runnable
 
 	public void startServer (int port, boolean useSSL) throws Exception
 	{
+		
+
 		
 		srv = new MyServ();
  		// setting aliases, for an optional file servlet
@@ -87,6 +90,13 @@ public class WebServerService extends Service implements Runnable
 		
 		
 		srv.serve();
+		
+
+		Notification ntf = new Notification(R.drawable.ic_launcher,
+	                "Server Started.", System
+	                        .currentTimeMillis());
+
+		startForeground(port,ntf);
 
 	}
 	
@@ -95,6 +105,9 @@ public class WebServerService extends Service implements Runnable
 		srv.destroyAllServlets();
 		
 		srv.notifyStop();
+		
+		stopForeground(true);
+		
 		srv = null;
 	}
 
@@ -111,6 +124,7 @@ public class WebServerService extends Service implements Runnable
 		if (srv == null)
 		{
 			new Thread(this).start();
+			
 		}
 		
 		return Service.START_STICKY;
