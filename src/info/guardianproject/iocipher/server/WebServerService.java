@@ -66,14 +66,14 @@ public class WebServerService extends Service
 		mdns.register("iocs-http", "_http._tcp.local", "iocipherweb", 8888, "path=/");
 
 		//This constructor is deprecated. Use Notification.Builder instead
-		Notification notice = new Notification(R.drawable.ic_launcher, "Server Running", System.currentTimeMillis());
+		Notification notice = new Notification(R.drawable.iocipher, "Server Running", System.currentTimeMillis());
 
 		Intent intent = new Intent(this, IOCipherServerActivity.class);
 
 		PendingIntent pendIntent = PendingIntent.getActivity(this, 0, intent, 0);
 
 		//This method is deprecated. Use Notification.Builder instead.
-		notice.setLatestEventInfo(this, "Server Running", "iocipherserver", pendIntent);
+		notice.setLatestEventInfo(this, "IOCipher engaged!", "iocipherserver", pendIntent);
 
 		notice.flags |= Notification.FLAG_NO_CLEAR;
 		
@@ -81,9 +81,16 @@ public class WebServerService extends Service
 		
 		srv = new MyServ();
 		
+		File filePublic = new java.io.File("/sdcard/public");
+		
+		if (!filePublic.exists())
+		{
+			filePublic.mkdir();
+		}
+		
  		// setting aliases, for an optional file servlet
             Acme.Serve.Serve.PathTreeDictionary aliases = new Acme.Serve.Serve.PathTreeDictionary();
-            aliases.put("/*", new java.io.File("/sdcard"));
+            aliases.put("/*", filePublic);
 	//  note cast name will depend on the class name, since it is anonymous class
             srv.setMappingTable(aliases);
 		// setting properties for the server, and exchangeable Acceptors
