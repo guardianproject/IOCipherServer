@@ -4,6 +4,7 @@ package info.guardianproject.iocipher.server;
 import java.io.File;
 
 import android.app.Notification;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
@@ -13,6 +14,7 @@ public class WebServerService extends Service implements Runnable
 {
 	private final static String TAG = "IOCipherServer";
 
+	private MdnsManager mdns;
 	
 	class MyServ extends Acme.Serve.Serve {
 		// Overriding method for public access
@@ -46,6 +48,22 @@ public class WebServerService extends Service implements Runnable
 	{
 		
 
+		mdns = new MdnsManager(this);
+		mdns.register("iocs", "_webdav._tcp.local", "iocipher", 8888, "path=/files");
+
+		//This constructor is deprecated. Use Notification.Builder instead
+		Notification notice = new Notification(R.drawable.ic_launcher, "Server Running", System.currentTimeMillis());
+
+		Intent intent = new Intent(this, IOCipherServerActivity.class);
+
+		PendingIntent pendIntent = PendingIntent.getActivity(this, 0, intent, 0);
+
+		//This method is deprecated. Use Notification.Builder instead.
+		notice.setLatestEventInfo(this, "Server Running", "iocipherserver", pendIntent);
+
+		notice.flags |= Notification.FLAG_NO_CLEAR;
+		
+		startForeground(port,notice);
 		
 		srv = new MyServ();
  		// setting aliases, for an optional file servlet
@@ -88,16 +106,10 @@ public class WebServerService extends Service implements Runnable
 		
 		srv.addServlet("/files/*", new DavServlet(new File("/sdcard"),"files"));
 		
-		
 		srv.serve();
 		
 
-		Notification ntf = new Notification(R.drawable.ic_launcher,
-	                "Server Started.", System
-	                        .currentTimeMillis());
-
-		startForeground(port,ntf);
-
+		
 	}
 	
 	public void stopServer ()
@@ -107,6 +119,8 @@ public class WebServerService extends Service implements Runnable
 		srv.notifyStop();
 		
 		stopForeground(true);
+		
+		mdns.unregister("iocs");
 		
 		srv = null;
 	}

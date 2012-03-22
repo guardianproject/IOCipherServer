@@ -22,7 +22,7 @@ import android.widget.ToggleButton;
 public class IOCipherServerActivity extends Activity {
 	
 	private final static String TAG = "IOCipherServer";
-
+	
 	
     /** Called when the activity is first created. */
     @Override
@@ -53,6 +53,7 @@ public class IOCipherServerActivity extends Activity {
 		startService(intent);
 		
 		//this.bindService(service, conn, flags)
+		
 		
 		showStatus();
     }

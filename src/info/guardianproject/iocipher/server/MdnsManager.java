@@ -41,12 +41,13 @@ public class MdnsManager {
 		   mJmdns.registerService(svcInfo);
 		   regMap.put(alias, svcInfo);
 		 
+		   /*
 		   WifiManager wifi = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
 		   if(wifi != null)
 		   {
 		       mcLock = wifi.createMulticastLock("myLock");
 		       mcLock.acquire();
-		   }
+		   }*/
 		   return svcInfo;
 	}
 	
@@ -56,10 +57,11 @@ public class MdnsManager {
 	   mJmdns.unregisterService(svcInfo);
 	  }
 	  
+	  /*
 	  if(mcLock != null && mcLock.isHeld())
 	   {
 	       mcLock.release();
-	   }
+	   }*/
 	  
 	  return svcInfo;
 	 }
