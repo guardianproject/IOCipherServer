@@ -7,14 +7,37 @@ import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
-public class WebServerService extends Service implements Runnable
+public class WebServerService extends Service
 {
 	private final static String TAG = "IOCipherServer";
 
 	private MdnsManager mdns;
+	
+	 // Binder given to clients
+    private final IBinder mBinder = new LocalBinder();
+
+    /**
+     * Class used for the client Binder.  Because we know this service always
+     * runs in the same process as its clients, we don't need to deal with IPC.
+     */
+    public class LocalBinder extends Binder {
+    	WebServerService getService() {
+            // Return this instance of LocalService so clients can call public methods
+            return WebServerService.this;
+        }
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+    	
+    	
+    	
+        return mBinder;
+    }
 	
 	class MyServ extends Acme.Serve.Serve {
 		// Overriding method for public access
@@ -29,27 +52,18 @@ public class WebServerService extends Service implements Runnable
             
 	MyServ srv;
 
-	public void run ()
+	public MyServ getWebServer ()
 	{
-		int port = 8888;
-		boolean useSSL = true;
-		
-		try
-		{
-			startServer(port, useSSL);
-		}
-		catch (Exception e)
-		{
-			Log.e(TAG, "unable to start secure server",e);
-		}
+		return srv;
 	}
-
+	
 	public void startServer (int port, boolean useSSL) throws Exception
 	{
 		
 
 		mdns = new MdnsManager(this);
-		mdns.register("iocs", "_webdav._tcp.local", "iocipher", 8888, "path=/files");
+		mdns.register("iocs", "_webdav._tcp.local", "iocipherwebdav", 8888, "path=/files");
+		mdns.register("iocs-http", "_http._tcp.local", "iocipherweb", 8888, "path=/");
 
 		//This constructor is deprecated. Use Notification.Builder instead
 		Notification notice = new Notification(R.drawable.ic_launcher, "Server Running", System.currentTimeMillis());
@@ -66,6 +80,7 @@ public class WebServerService extends Service implements Runnable
 		startForeground(port,notice);
 		
 		srv = new MyServ();
+		
  		// setting aliases, for an optional file servlet
             Acme.Serve.Serve.PathTreeDictionary aliases = new Acme.Serve.Serve.PathTreeDictionary();
             aliases.put("/*", new java.io.File("/sdcard"));
@@ -114,15 +129,23 @@ public class WebServerService extends Service implements Runnable
 	
 	public void stopServer ()
 	{
-		srv.destroyAllServlets();
+		if (srv != null)
+		{
+			
+			srv.notifyStop();
+			
+			srv = null;
+		}
 		
-		srv.notifyStop();
+		
+		if (mdns != null)
+		{
+			mdns.unregister("iocs");
+			mdns.unregister("iocs-http");
+		}
 		
 		stopForeground(true);
 		
-		mdns.unregister("iocs");
-		
-		srv = null;
 	}
 
 
@@ -132,6 +155,7 @@ public class WebServerService extends Service implements Runnable
 		stopServer ();
 	}
 
+	/*
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		
@@ -142,11 +166,5 @@ public class WebServerService extends Service implements Runnable
 		}
 		
 		return Service.START_STICKY;
-	}
-
-	@Override
-	public IBinder onBind(Intent arg0) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	}*/
 }

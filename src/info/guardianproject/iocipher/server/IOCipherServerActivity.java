@@ -1,18 +1,20 @@
 package info.guardianproject.iocipher.server;
 
+import info.guardianproject.iocipher.server.WebServerService.LocalBinder;
+
 import java.io.File;
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
 import java.util.Enumeration;
 
 import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.util.Log;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
@@ -23,14 +25,25 @@ public class IOCipherServerActivity extends Activity {
 	
 	private final static String TAG = "IOCipherServer";
 	
+    boolean mBound = false;
+
+    private WebServerService mService;
+
+	private int mWsPort = 8888;
+	private boolean mWsUseSSL = true;
 	
+    private Thread mWsThread;
+    
+    private ToggleButton tButton;
+    
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-        
-        ToggleButton tButton = (ToggleButton)findViewById(R.id.toggleButton1);
+
+        tButton = (ToggleButton)findViewById(R.id.toggleButton1);
+        tButton.setEnabled(false);
         tButton.setOnCheckedChangeListener(new OnCheckedChangeListener () {
 
 			@Override
@@ -45,25 +58,109 @@ public class IOCipherServerActivity extends Activity {
 			}
         	
         });
+        
+        
     }
     
-    public void startWebServer ()
+    
+    
+    @Override
+	protected void onResume() {
+		super.onResume();
+		
+		bindService();
+	    
+	}
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        // Unbind from the service
+        if (mBound) {
+            unbindService(mConnection);
+            mBound = false;
+        }
+    }
+
+
+	public void bindService ()
     {
         Intent intent = new Intent(this, WebServerService.class);
-		startService(intent);
 		
-		//this.bindService(service, conn, flags)
-		
-		
-		showStatus();
+        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+
+    }
+    
+    public void startWebServer()
+    {
+    	
+    	mWsThread = new Thread ()
+    	{
+    		
+    		public void run ()
+    		{
+	    		try
+	    		{
+	    			mService.startServer(mWsPort, mWsUseSSL);
+	    		}
+	    		catch (Exception e)
+	    		{
+	    			Log.e(TAG, "unable to start secure server",e);
+	    		}
+	    		
+    		}
+    	};
+    	
+    	mWsThread.start();
+    	
+    	showStatus();
     }
     
     public void stopWebServer ()
     {
-    	Intent intent = new Intent(this, WebServerService.class);
-   		stopService(intent);
-   		
+    	
+    	if (mWsThread.isAlive())
+    	{
+    		mService.stopServer();
+    		mWsThread.interrupt();
+    		mWsThread = null;
+    	}
+    	
+   		clearStatus ();
     }
+    
+    private void postBound ()
+    {
+
+        tButton.setEnabled(true);
+        
+        if (mService.getWebServer() != null)
+        {
+        	showStatus();
+        }
+        
+    }
+    /** Defines callbacks for service binding, passed to bindService() */
+    private ServiceConnection mConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className,
+                IBinder service) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            LocalBinder binder = (LocalBinder) service;
+            mService = binder.getService();
+            mBound = true;
+            
+            postBound ();
+            
+            
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            mBound = false;
+        }
+    };
     
     private void showStatus ()
     {
@@ -96,6 +193,13 @@ public class IOCipherServerActivity extends Activity {
     				"SHA1: " + fingerprint
     				);
     	}
+    }
+    
+    private void clearStatus ()
+    {
+    	TextView tv = (TextView)findViewById(R.id.textStatus);
+    
+    	tv.setText("");
     }
     
 	@Override
