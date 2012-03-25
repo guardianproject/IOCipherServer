@@ -70,6 +70,9 @@ public class IOCipherServerActivity extends SherlockActivity {
 	private boolean mWsUseSSL = true;
 	private boolean runOnBind = false;
 	
+
+	private MenuItem mMenuStartTop;
+	
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -215,6 +218,9 @@ public class IOCipherServerActivity extends SherlockActivity {
     	
     	if (mService != null && mService.isServerRunning())
     	{
+    		if (mMenuStartTop != null)
+    		mMenuStartTop.setIcon(android.R.drawable.ic_media_pause);
+    		
     		String protocol = "https";
     		if (!mWsUseSSL)
     			protocol = "http";
@@ -245,9 +251,13 @@ public class IOCipherServerActivity extends SherlockActivity {
     			Log.e(TAG,"error loading fingerprint",e);
     		} 
     		
+    		
     	}
     	else
     	{
+    		if (mMenuStartTop != null)
+    		mMenuStartTop.setIcon(android.R.drawable.ic_media_play);
+    		
     		msg.append("(Server deactivated)");
     		
     	}
@@ -377,11 +387,13 @@ public class IOCipherServerActivity extends SherlockActivity {
 	    return r0 + r1 + r2 + r3;
 	}
 		
+	
 	 @Override
     public boolean onCreateOptionsMenu(Menu menu) {
       
-		 menu.add(Menu.NONE,1,Menu.NONE,"Start")
-         .setIcon(android.R.drawable.ic_media_play)
+		 mMenuStartTop = menu.add(Menu.NONE,1,Menu.NONE,"Start");
+		 
+		 mMenuStartTop.setIcon(android.R.drawable.ic_media_play)
          .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
     
 		 
