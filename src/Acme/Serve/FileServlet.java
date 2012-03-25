@@ -349,9 +349,10 @@ public class FileServlet extends HttpServlet {
 			p.println("<HTML><HEAD>");
 			p.println("<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=" + charSet + "\">");
 			p.println("<TITLE>Index of " + path + "</TITLE>");
-			p.println("</HEAD><BODY " + Serve.BGCOLOR);
-			p.println("><H2>Index of " + path + "</H2>");
-			p.println("<PRE>");
+			p.println("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+			p.println("</HEAD><BODY>");
+			p.println("<H2>Index of " + path + "</H2><PRE>");
+			
 			p.println("mode         bytes  last-changed    name");
 			p.println("<HR>");
 			// TODO consider not case sensetive search
@@ -394,8 +395,7 @@ public class FileServlet extends HttpServlet {
 			if (total != 0)
 				total += 3;
 			p.println("total " + total);
-			p.println("</PRE>");
-			p.println("<HR>");
+			p.println("<HR></PRE>");
 			p.print(Serve.Identification.serverIdHtml);
 			p.println("</BODY></HTML>");
 			p.flush();

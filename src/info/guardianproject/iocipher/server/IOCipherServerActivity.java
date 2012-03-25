@@ -31,21 +31,26 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Enumeration;
 
-import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
-public class IOCipherServerActivity extends Activity {
+import com.actionbarsherlock.app.SherlockActivity;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuItem;
+
+public class IOCipherServerActivity extends SherlockActivity {
 	
 	private final static String TAG = "IOCipherServer";
 	
@@ -53,9 +58,9 @@ public class IOCipherServerActivity extends Activity {
 
     private WebServerService mService;
 
-	private int mWsPort = 8888;
+    private final static int DEFAULT_PORT = 8443;
+	private int mWsPort = -1;
 	private boolean mWsUseSSL = true;
-	
 	private boolean runOnBind = false;
 	
     
@@ -66,6 +71,8 @@ public class IOCipherServerActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+        
+        setPreferences();
 
         tButton = (ToggleButton)findViewById(R.id.toggleButton1);
         tButton.setEnabled(false);
@@ -87,6 +94,14 @@ public class IOCipherServerActivity extends Activity {
         
     }
     
+    private void setPreferences ()
+    {
+    	
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        
+        mWsUseSSL = prefs.getBoolean("useSSL", true);
+        mWsPort = prefs.getInt("prefPort", DEFAULT_PORT);
+    }
     
     
     @Override
@@ -157,8 +172,9 @@ public class IOCipherServerActivity extends Activity {
         {
         	startWebServer();
         }
-        else if (mService.getWebServer() != null)
+        else if (mService.isServerRunning())
         {
+        	tButton.setChecked(true);
         	showStatus();
         }
         
@@ -208,10 +224,10 @@ public class IOCipherServerActivity extends Activity {
     	
     	if (ip != null)
     	{
-    		tv.setText("Browser:\nhttps://" + ip + ":8888/public" 
+    		tv.setText("Browser:\nhttps://" + ip + ":" + mWsPort + "/public" 
     				+ "\n\n" +
     				
-    				"WebDav (Secure):\nhttps://" + ip + ":8888/sdcard"
+    				"WebDav (Secure):\nhttps://" + ip + ":" + mWsPort + "/sdcard"
     				+ "\n\n" +
     				"SHA1: " + fingerprint
     				);
@@ -338,4 +354,18 @@ public class IOCipherServerActivity extends Activity {
 	    return r0 + r1 + r2 + r3;
 	}
 		
+	 @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+      
+     
+        menu.add("Settings")
+            .setIcon(android.R.drawable.ic_menu_preferences)
+            .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
+        
+        menu.add("About")
+        .setIcon(android.R.drawable.ic_menu_info_details)
+        .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
+
+        return true;
+    }
 }

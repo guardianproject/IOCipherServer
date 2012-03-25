@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+	<PreferenceCategory android:title="Server">
+		<CheckBoxPreference 
+			android:title="Use SSL"
+			android:defaultValue="true" 
+			android:summary="Enable Socket Security for all Network Activity"
+			android:key="useSSL" />
+		<EditTextPreference
+			android:defaultValue="8443"
+			android:key="prefPort"
+			android:title="Server Port"
+			android:summary="Port on which the server should listen (> 1000)"
+			/>
+	    <EditTextPreference
+			android:defaultValue="admin"
+			android:key="prefUser"
+			android:title="WebDAV Username"
+			android:summary="Username for accessing webdav authenticated share"
+			/>
+	     <EditTextPreference
+			android:defaultValue="admin"
+			android:key="prefPass"
+			android:title="WebDAV Password"
+			android:summary="Password for accessing webdav authenticated share"
+			android:inputType="textPassword"
+			/>
+	</PreferenceCategory>
+	<PreferenceCategory android:title="Sharing">
+		<CheckBoxPreference 
+			android:title="Share Public"
+			android:defaultValue="true" 
+			android:summary="Share your /sdcard/public folder"
+			android:key="sharePublic" />
+		<CheckBoxPreference 
+			android:title="Share Media"
+			android:defaultValue="true" 
+			android:summary="Share all photos &amp; media"
+			android:key="shareMedia" />
+		<CheckBoxPreference 
+			android:title="Share Apps"
+			android:defaultValue="true" 
+			android:summary="Share all installed app APKs for download"
+			android:key="shareApps" />
+	</PreferenceCategory>
+</PreferenceScreen>

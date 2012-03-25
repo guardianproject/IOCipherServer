@@ -21,11 +21,15 @@ public class DavServlet extends HttpServlet
 	HttpManager httpManager;
 	File fileRoot;
 	String basePath;
+	String user;
+	String pass;
 	
-	public DavServlet (File _fileRoot, String _basePath)
+	public DavServlet (File _fileRoot, String _basePath, String _user, String _pass)
 	{
 		fileRoot = _fileRoot;
 		basePath = _basePath;
+		user = _user;
+		pass = _pass;
 	}
 	
 	public void service( javax.servlet.ServletRequest servletRequest, javax.servlet.ServletResponse servletResponse ) throws ServletException, IOException { 
@@ -43,7 +47,8 @@ public class DavServlet extends HttpServlet
 
 	@Override
 	public void destroy() {
-		// TODO Auto-generated method stub
+		
+		
 		
 	}
 
@@ -61,13 +66,12 @@ public class DavServlet extends HttpServlet
 
 	@Override
 	public void init(ServletConfig arg0) throws ServletException {
-		// TODO Auto-generated method stub
 
 		 System.setProperty 
 		 ("org.xml.sax.driver","org.xmlpull.v1.sax2.Driver"); 
 		 
 		 Map<String,String> mapUsers = new HashMap<String,String>();
-		 mapUsers.put("foo", "bar");
+		 mapUsers.put(user, pass);
 	//	NullSecurityManager securityManager = new NullSecurityManager();//SimpleSecurityManager();
 		 SimpleSecurityManager securityManager = new SimpleSecurityManager();
 		 securityManager.setNameAndPasswords(mapUsers);

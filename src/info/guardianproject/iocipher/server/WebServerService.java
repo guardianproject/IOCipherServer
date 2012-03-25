@@ -22,6 +22,9 @@ public class WebServerService extends Service
 
     private Thread mWsThread;
     
+
+	private int mPort;
+	private boolean mUseSsl;
     /**
      * Class used for the client Binder.  Because we know this service always
      * runs in the same process as its clients, we don't need to deal with IPC.
@@ -58,9 +61,6 @@ public class WebServerService extends Service
 	{
 		return srv;
 	}
-	
-	private int mPort;
-	private boolean mUseSsl;
 	
 	private void startNotification ()
 	{
@@ -149,9 +149,15 @@ public class WebServerService extends Service
 					}
 					
 					srv.arguments = properties;
-					srv.addDefaultServlets(null); // optional file servlet
 					
-					DavServlet dServlet = new DavServlet(new File("/sdcard"),"sdcard");
+					srv.addServlet("/*", new FileServlet());
+
+//					srv.addDefaultServlets(null); // optional file servlet
+					
+					String davUser = "admin";
+					String davPwd = "admin";
+					DavServlet dServlet = new DavServlet(new File("/sdcard"),"sdcard", davUser, davPwd);
+					
 					srv.addServlet("/sdcard/*", dServlet);
 					
 					srv.serve();
@@ -203,6 +209,13 @@ public class WebServerService extends Service
 		
 	}
 
+	public boolean isServerRunning ()
+	{
+		if (mWsThread != null && mWsThread.isAlive())
+			return true;
+		else
+			return false;
+	}
 
 	@Override
 	public void onDestroy() {
