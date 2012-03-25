@@ -11,6 +11,7 @@
 			android:key="prefPort"
 			android:title="Server Port"
 			android:summary="Port on which the server should listen (> 1000)"
+			android:numeric="integer"
 			/>
 	    <EditTextPreference
 			android:defaultValue="admin"
