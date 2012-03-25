@@ -31,6 +31,8 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Enumeration;
 
+
+import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -54,6 +56,11 @@ public class IOCipherServerActivity extends SherlockActivity {
 	
 	private final static String TAG = "IOCipherServer";
 	
+	private final String ksFileName = "iocipher.bks";
+	private final String ksPassword = "changeme";
+	private final String ksAlias = "twjs";
+	
+	
     boolean mBound = false;
 
     private WebServerService mService;
@@ -63,9 +70,6 @@ public class IOCipherServerActivity extends SherlockActivity {
 	private boolean mWsUseSSL = true;
 	private boolean runOnBind = false;
 	
-    
-    private ToggleButton tButton;
-    
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -74,6 +78,7 @@ public class IOCipherServerActivity extends SherlockActivity {
         
         setPreferences();
 
+        /*
         tButton = (ToggleButton)findViewById(R.id.toggleButton1);
         tButton.setEnabled(false);
         tButton.setOnCheckedChangeListener(new OnCheckedChangeListener () {
@@ -90,7 +95,7 @@ public class IOCipherServerActivity extends SherlockActivity {
 			}
         	
         });
-        
+        */
         
     }
     
@@ -100,7 +105,7 @@ public class IOCipherServerActivity extends SherlockActivity {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         
         mWsUseSSL = prefs.getBoolean("useSSL", true);
-        mWsPort = prefs.getInt("prefPort", DEFAULT_PORT);
+        mWsPort = Integer.parseInt(prefs.getString("prefPort", "" + DEFAULT_PORT));
     }
     
     
@@ -166,17 +171,14 @@ public class IOCipherServerActivity extends SherlockActivity {
     private void postBound ()
     {
 
-        tButton.setEnabled(true);
         
         if (runOnBind)
         {
         	startWebServer();
         }
-        else if (mService.isServerRunning())
-        {
-        	tButton.setChecked(true);
-        	showStatus();
-        }
+        
+        showStatus();
+        
         
     }
     /** Defines callbacks for service binding, passed to bindService() */
@@ -204,34 +206,55 @@ public class IOCipherServerActivity extends SherlockActivity {
     private void showStatus ()
     {
     	TextView tv = (TextView)findViewById(R.id.textStatus);
-    
+    	StringBuffer msg = new StringBuffer();
+    	
     	String ip = getWifiIp(this).getHostAddress();
-    	String fingerprint = "";
     	
-    	File fileKS = new File(this.getFilesDir(),"iocipher.bks");
-		String password = "changeme";
-		String alias = "twjs";
-		
-		CACertManager ccm = new CACertManager();
-		try {
-			ccm.load(fileKS.getAbsolutePath(), password);
-			fingerprint = ccm.getFingerprint(ccm.getCertificateChain(alias)[0], "SHA1");
-			
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+    	msg.append("Wifi IP: ").append(ip);
+    	msg.append("\n\n");
     	
-    	if (ip != null)
+    	if (mService != null && mService.isServerRunning())
     	{
-    		tv.setText("Browser:\nhttps://" + ip + ":" + mWsPort + "/public" 
-    				+ "\n\n" +
-    				
-    				"WebDav (Secure):\nhttps://" + ip + ":" + mWsPort + "/sdcard"
-    				+ "\n\n" +
-    				"SHA1: " + fingerprint
-    				);
+    		String protocol = "https";
+    		if (!mWsUseSSL)
+    			protocol = "http";
+    	
+    		msg.append("Web Browser:").append('\n');
+    		msg.append(protocol).append("://").append(ip).append(':').append(mWsPort).append("/public");
+    		msg.append("\n\n");
+    		
+    		msg.append("WebDAV Share:").append('\n');
+    		msg.append(protocol).append("://").append(ip).append(':').append(mWsPort).append("/sdcard");
+    		msg.append("\n\n");
+    		
+    		String fingerprint = "";
+        	
+    		
+        	File fileKS = new File(this.getFilesDir(),ksFileName);
+    	
+    		
+    		CACertManager ccm = new CACertManager();
+    		try {
+    			ccm.load(fileKS.getAbsolutePath(), ksPassword);
+    			fingerprint = ccm.getFingerprint(ccm.getCertificateChain(ksAlias)[0], "SHA1");
+    			
+        		msg.append("SHA1 Fingerprint").append('\n');
+        		msg.append(fingerprint);
+
+    		} catch (Exception e) {
+    			Log.e(TAG,"error loading fingerprint",e);
+    		} 
+    		
     	}
+    	else
+    	{
+    		msg.append("(Server deactivated)");
+    		
+    	}
+		
+		
+		
+		tv.setText(msg.toString());
     }
     
     private void clearStatus ()
@@ -357,15 +380,72 @@ public class IOCipherServerActivity extends SherlockActivity {
 	 @Override
     public boolean onCreateOptionsMenu(Menu menu) {
       
-     
-        menu.add("Settings")
+		 menu.add(Menu.NONE,1,Menu.NONE,"Start")
+         .setIcon(android.R.drawable.ic_media_play)
+         .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
+    
+		 
+        menu.add(Menu.NONE,2,Menu.NONE,"Settings")
             .setIcon(android.R.drawable.ic_menu_preferences)
-            .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
+            .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
         
-        menu.add("About")
+        
+        menu.add(Menu.NONE,3,Menu.NONE,"About")
         .setIcon(android.R.drawable.ic_menu_info_details)
-        .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
+        .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
 
         return true;
     }
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+
+		switch (item.getItemId())
+		{
+
+			case (1):
+			
+				if (!mService.isServerRunning())
+				{
+					startWebServer();
+					item.setIcon(android.R.drawable.ic_media_pause);
+				}
+				else
+				{
+					stopWebServer();
+					item.setIcon(android.R.drawable.ic_media_play);
+				}
+				
+			
+			break;
+			
+			case (2):
+				showPrefs();
+			break;
+			
+			case (3):
+				showAbout ();
+			break;
+			default:
+			
+		}
+		
+		return super.onOptionsItemSelected(item);
+	}
+	 
+	private void showPrefs ()
+	{
+		Intent intent = new Intent (this, IOCipherSettingsActivity.class);
+		startActivity(intent);
+	}
+	
+	private void showAbout ()
+	{
+		 new AlertDialog.Builder(this)
+	         .setTitle(getString(R.string.app_name))
+	         .setMessage(getString(R.string.about))
+	         .create().show();
+		
+	}
+	 
 }

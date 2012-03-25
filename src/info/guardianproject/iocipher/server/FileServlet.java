@@ -382,9 +382,6 @@ public class FileServlet extends HttpServlet {
 					} catch (InvocationTargetException e) {
 					}
 				String aFileSize = lengthftm.format(aFileLen = aFile.length());
-				total += (aFileLen + 1023) / 1024; // 
-				while (aFileSize.length() < 12)
-					aFileSize = " " + aFileSize;
 				
 				String aFileDate = Acme.Utils.lsDateStr(new Date(aFile.lastModified()));
 				while (aFileDate.length() < 14)

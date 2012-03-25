@@ -95,10 +95,11 @@ public class WebServerService extends Service
 			{
 				try
 				{
-					mdns = new MdnsManager(WebServerService.this);
+					if (mdns == null)
+						mdns = new MdnsManager(WebServerService.this);
+					
 					mdns.register("iocs", "_webdavs._tcp.local", "iocipherwebdav", 8888, "path=/sdcard");
 					mdns.register("iocs-https", "_https._tcp.local", "iocipherweb", 8888, "path=/public");
-			
 			
 					
 					srv = new MyServ();
@@ -186,18 +187,15 @@ public class WebServerService extends Service
 
     	if (mWsThread.isAlive())
     	{
-    		
     		mWsThread.interrupt();
+    		mWsThread = null;
     	}
     	
 		if (srv != null)
 		{
-			
 			srv.notifyStop();
-			
 			srv = null;
 		}
-		
 		
 		if (mdns != null)
 		{
