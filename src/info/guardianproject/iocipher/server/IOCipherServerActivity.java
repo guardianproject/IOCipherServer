@@ -58,7 +58,6 @@ public class IOCipherServerActivity extends Activity {
 	
 	private boolean runOnBind = false;
 	
-    private Thread mWsThread;
     
     private ToggleButton tButton;
     
@@ -112,7 +111,7 @@ public class IOCipherServerActivity extends Activity {
 	public void bindService ()
     {
         Intent intent = new Intent(this, WebServerService.class);
-		
+        startService(intent);
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 
     }
@@ -128,38 +127,23 @@ public class IOCipherServerActivity extends Activity {
     	}
     	else
     	{
-	    	mWsThread = new Thread ()
-	    	{
-	    		
-	    		public void run ()
-	    		{
-		    		try
-		    		{
-		    			mService.startServer(mWsPort, mWsUseSSL);
-		    		}
-		    		catch (Exception e)
-		    		{
-		    			Log.e(TAG, "unable to start secure server",e);
-		    		}
-		    		
-	    		}
-	    	};
-	    	
-	    	mWsThread.start();
-	    	
-	    	showStatus();
+    		try
+    		{
+    			mService.startServer(mWsPort, mWsUseSSL);
+
+    	    	showStatus();
+    		}
+    		catch (Exception e)
+    		{
+    			Log.e(TAG, "unable to start secure server",e);
+    		}
+    		
     	}
     }
     
     public void stopWebServer ()
     {
-    	
-    	if (mWsThread.isAlive())
-    	{
-    		mService.stopServer();
-    		mWsThread.interrupt();
-    		mWsThread = null;
-    	}
+    	mService.stopServer();
     	
    		clearStatus ();
     }
@@ -224,10 +208,10 @@ public class IOCipherServerActivity extends Activity {
     	
     	if (ip != null)
     	{
-    		tv.setText("Browser:\nhttps://" + ip + ":8888" 
+    		tv.setText("Browser:\nhttps://" + ip + ":8888/public" 
     				+ "\n\n" +
     				
-    				"WebDav (Secure):\nhttps://" + ip + ":8888/files"
+    				"WebDav (Secure):\nhttps://" + ip + ":8888/sdcard"
     				+ "\n\n" +
     				"SHA1: " + fingerprint
     				);
