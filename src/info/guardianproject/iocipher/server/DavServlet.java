@@ -2,6 +2,8 @@ package info.guardianproject.iocipher.server;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.ServletConfig;
@@ -12,6 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 import com.bradmcevoy.http.HttpManager;
 import com.ettrema.http.fs.FileSystemResourceFactory;
 import com.ettrema.http.fs.NullSecurityManager;
+import com.ettrema.http.fs.SimpleSecurityManager;
 
 public class DavServlet extends HttpServlet 
 {
@@ -63,8 +66,12 @@ public class DavServlet extends HttpServlet
 		 System.setProperty 
 		 ("org.xml.sax.driver","org.xmlpull.v1.sax2.Driver"); 
 		 
-		NullSecurityManager securityManager = new NullSecurityManager();//SimpleSecurityManager();
-
+		 Map<String,String> mapUsers = new HashMap<String,String>();
+		 mapUsers.put("foo", "bar");
+	//	NullSecurityManager securityManager = new NullSecurityManager();//SimpleSecurityManager();
+		 SimpleSecurityManager securityManager = new SimpleSecurityManager();
+		 securityManager.setNameAndPasswords(mapUsers);
+		 
 		FileSystemResourceFactory fsrf = new FileSystemResourceFactory(fileRoot, securityManager, basePath);
 		fsrf.setAllowDirectoryBrowsing(true);
 		fsrf.setDigestAllowed(true);
