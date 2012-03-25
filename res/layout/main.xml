@@ -6,32 +6,24 @@
     android:layout_gravity="center"
      >
 
-    <TextView
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/hello" 
-        android:padding="10sp"
-        android:textSize="10pt"
-        />
-   
-
+<!-- 
     <ToggleButton
         android:id="@+id/toggleButton1"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:text="@string/btnserv"
-                android:padding="10sp"
+                android:padding="20sp"
                 android:textSize="10pt"
-        
+        android:background="@drawable/grey"
          />
-    
+     -->
      <TextView
          android:id="@+id/textStatus"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:text="" 
         android:padding="10sp"
-        android:textSize="9pt"
+        android:textSize="8pt"
         android:autoLink="web" 
         />
 

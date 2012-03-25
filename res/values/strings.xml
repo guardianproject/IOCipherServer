@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="hello">Welcome to IOCipherServer. This is a secure web server for providing access
-        to local files on this mobile device.</string>
     <string name="btnserv">Activate Server</string>
     <string name="app_name">IOCipher</string>
-
+	<string name="about">Welcome to IOCipherServer. This is a secure web server for providing access
+        to local files on this mobile device.</string>
 </resources>
