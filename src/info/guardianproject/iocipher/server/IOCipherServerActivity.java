@@ -23,6 +23,7 @@ along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 import info.guardianproject.iocipher.server.WebServerService.LocalBinder;
+import info.guardiaproject.iocipher.server.R;
 
 import java.io.File;
 import java.net.InetAddress;
@@ -30,7 +31,6 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Enumeration;
-
 
 import android.app.AlertDialog;
 import android.content.ComponentName;
@@ -43,10 +43,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.widget.CompoundButton;
-import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.TextView;
-import android.widget.ToggleButton;
 
 import com.actionbarsherlock.app.SherlockActivity;
 import com.actionbarsherlock.view.Menu;
