@@ -1,7 +1,6 @@
 package info.guardianproject.iocipher.server;
 
 
-import info.guardiaproject.iocipher.server.R;
 
 import java.io.File;
 

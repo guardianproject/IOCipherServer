@@ -23,7 +23,6 @@ along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 import info.guardianproject.iocipher.server.WebServerService.LocalBinder;
-import info.guardiaproject.iocipher.server.R;
 
 import java.io.File;
 import java.net.InetAddress;
@@ -237,19 +236,20 @@ public class IOCipherServerActivity extends SherlockActivity {
     		
         	File fileKS = new File(this.getFilesDir(),ksFileName);
     	
-    		
-    		CACertManager ccm = new CACertManager();
-    		try {
-    			ccm.load(fileKS.getAbsolutePath(), ksPassword);
-    			fingerprint = ccm.getFingerprint(ccm.getCertificateChain(ksAlias)[0], "SHA1");
-    			
-        		msg.append("SHA1 Fingerprint").append('\n');
-        		msg.append(fingerprint);
-
-    		} catch (Exception e) {
-    			Log.e(TAG,"error loading fingerprint",e);
-    		} 
-    		
+    		if (fileKS.exists())
+    		{
+	    		CACertManager ccm = new CACertManager();
+	    		try {
+	    			ccm.load(fileKS.getAbsolutePath(), ksPassword);
+	    			fingerprint = ccm.getFingerprint(ccm.getCertificateChain(ksAlias)[0], "SHA1");
+	    			
+	        		msg.append("SHA1 Fingerprint").append('\n');
+	        		msg.append(fingerprint);
+	
+	    		} catch (Exception e) {
+	    			Log.e(TAG,"error loading fingerprint",e);
+	    		} 
+    		}
     		
     	}
     	else
