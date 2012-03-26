@@ -116,6 +116,8 @@ public class IOCipherServerActivity extends SherlockActivity {
 	protected void onResume() {
 		super.onResume();
 		
+        showStatus();
+        
 		bindService();
 	    
 	}
@@ -152,7 +154,7 @@ public class IOCipherServerActivity extends SherlockActivity {
     	{
     		try
     		{
-    			mService.startServer(mWsPort, mWsUseSSL);
+    			mService.startServer(mWsPort, mWsUseSSL, getWifiIp(this).getHostAddress());
 
     	    	showStatus();
     		}

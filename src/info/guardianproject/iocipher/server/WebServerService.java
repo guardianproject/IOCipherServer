@@ -25,6 +25,8 @@ public class WebServerService extends Service
 
 	private int mPort;
 	private boolean mUseSsl;
+	private String mIpAddress;
+	
     /**
      * Class used for the client Binder.  Because we know this service always
      * runs in the same process as its clients, we don't need to deal with IPC.
@@ -65,26 +67,27 @@ public class WebServerService extends Service
 	private void startNotification ()
 	{
 		//This constructor is deprecated. Use Notification.Builder instead
-		Notification notice = new Notification(R.drawable.iocipher, "Server Running", System.currentTimeMillis());
+		Notification notice = new Notification(R.drawable.iocipher, "Active: " + mIpAddress, System.currentTimeMillis());
 
 		Intent intent = new Intent(WebServerService.this, IOCipherServerActivity.class);
 
 		PendingIntent pendIntent = PendingIntent.getActivity(WebServerService.this, 0, intent, 0);
 
 		//This method is deprecated. Use Notification.Builder instead.
-		notice.setLatestEventInfo(WebServerService.this, "IOCipher engaged!", "iocipherserver", pendIntent);
+		notice.setLatestEventInfo(WebServerService.this, "IOCipherServer", "Active: " + mIpAddress, pendIntent);
 
 		notice.flags |= Notification.FLAG_NO_CLEAR;
 		
 		startForeground(mPort,notice);
-
-		
+	
 	}
-	public void startServer (int port, boolean useSSL) throws Exception
+	
+	public void startServer (int port, boolean useSSL, String ipAddress) throws Exception
 	{
 		
 		mPort = port;
 		mUseSsl = useSSL;
+		mIpAddress = ipAddress;
 		
 		startNotification();
 		
