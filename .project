@@ -30,4 +30,16 @@
 		<nature>com.android.ide.eclipse.adt.AndroidNature</nature>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>miltonapi</name>
+			<type>2</type>
+			<location>/home/n8fr8/dev/gp/repos/milton-iocipher/milton/milton-api/src/main/java</location>
+		</link>
+		<link>
+			<name>miltonservlet</name>
+			<type>2</type>
+			<location>/home/n8fr8/dev/gp/repos/milton-iocipher/milton/milton-servlet/src/main/java</location>
+		</link>
+	</linkedResources>
 </projectDescription>
