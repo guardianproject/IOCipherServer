@@ -56,6 +56,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import android.content.Context;
+import android.util.Log;
 
 import Acme.Utils;
 import Acme.Serve.Serve;
@@ -100,7 +101,7 @@ public class IOCipherFileServlet extends HttpServlet {
 	private Context mContext;
 	
 	// / Constructor.
-	public IOCipherFileServlet(Context context) {
+	public IOCipherFileServlet(Context context, java.io.File db, String password) {
 		
 		mContext = context;
 		
@@ -115,14 +116,19 @@ public class IOCipherFileServlet extends HttpServlet {
 		} catch (NoSuchMethodException e) {
 		}
 		useCompression = System.getProperty(DEF_USE_COMPRESSION) != null;
+		
+		if (vfs == null)
+		{
+			setUpIOCipher(db, password);
+		}
 	}
 
 	// / Constructor with throttling.
 	// @param throttles filename containing throttle settings
 	// @param charset used for displaying directory page
 	// @see ThrottledOutputStream
-	public IOCipherFileServlet(Context context, String throttles, String charset) throws IOException {
-		this(context);
+	public IOCipherFileServlet(Context context,java.io.File db, String password, String throttles, String charset) throws IOException {
+		this(context, db, password);
 		if (charset != null)
 			this.charSet = charset;
 		readThrottles(throttles);
@@ -360,6 +366,7 @@ public class IOCipherFileServlet extends HttpServlet {
 			}
 			PrintStream p = new PrintStream(new BufferedOutputStream(out), false, charSet); // 1.4
 			p.println("<HTML><HEAD>");
+			p.println("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
 			p.println("<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=" + charSet + "\">");
 			p.println("<TITLE>Index of " + path + "</TITLE>");
 			p.println("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
@@ -461,24 +468,30 @@ public class IOCipherFileServlet extends HttpServlet {
 	public void init(ServletConfig arg0) throws ServletException {
 		super.init(arg0);
 		
-		if (vfs == null)
-			setUpIOCipher();
+		
 	}
 	
 	private VirtualFileSystem vfs;
 
-	protected synchronized void setUpIOCipher() {
-		//VFS.getInstance(mContext.getDir("vfs",
-		//	Context.MODE_PRIVATE),"sqlcipherfs.db");
-		//java.io.File db = new java.io.File(mContext.getDir("vfs",
-			//	Context.MODE_PRIVATE).getAbsoluteFile(), "sqlcipherfs.db");
+	protected synchronized void setUpIOCipher(java.io.File db, String password) {
 		
-		vfs = new VirtualFileSystem("/sdcard/foo.db");
-		vfs.mount();
+		Log.v("IOCipher", "database file: " + db.getAbsolutePath());
+		if (db.exists())
+			Log.v("IOCipher", "exists: " + db.getAbsolutePath());
+		try {
+			vfs = new VirtualFileSystem(db.getAbsolutePath());
+		} catch (Exception e) {
+			Log.e("IOCipher", e.toString());
+		}
+		vfs.mount(password);
 		
-		//File text = new File("/");
-		//for (String path : text.list())
-			//log("iocipher root: " + path);
+	}
+
+	@Override
+	public void destroy() {
+		super.destroy();
 		
+		if (vfs != null)
+			vfs.unmount();
 	}
 }

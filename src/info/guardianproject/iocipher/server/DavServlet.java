@@ -37,7 +37,7 @@ public class DavServlet extends HttpServlet
         try { 
         	
         	
-            httpManager.process( new com.bradmcevoy.http.ServletRequest(req), new com.bradmcevoy.http.ServletResponse(resp) ); 
+            httpManager.process( new com.bradmcevoy.http.ServletRequest(req, null), new com.bradmcevoy.http.ServletResponse(resp) ); 
         } finally { 
             servletResponse.getOutputStream().flush(); 
             servletResponse.flushBuffer(); 

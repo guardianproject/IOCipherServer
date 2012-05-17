@@ -5,6 +5,7 @@ import java.io.File;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
@@ -25,6 +26,9 @@ public class WebServerService extends Service
 	private int mPort;
 	private boolean mUseSsl;
 	private String mIpAddress;
+
+	private String IOCIPHER_FOLDER = "iocipher";
+	private String IOCIPHER_FILE = "iocipher.db";
 	
     /**
      * Class used for the client Binder.  Because we know this service always
@@ -81,7 +85,7 @@ public class WebServerService extends Service
 	
 	}
 	
-	public void startServer (int port, boolean useSSL, String ipAddress) throws Exception
+	public void startServer (int port, boolean useSSL, String ipAddress, final String password) throws Exception
 	{
 		
 		//android.os.Debug.waitForDebugger();
@@ -140,7 +144,6 @@ public class WebServerService extends Service
 						properties.setProperty("acceptorImpl", "Acme.Serve.SSLAcceptor");
 						
 						File fileKS = new File(WebServerService.this.getFilesDir(),"iocipher.bks");
-						String password = "changeme";
 						
 						if (!fileKS.exists())
 						{
@@ -161,13 +164,18 @@ public class WebServerService extends Service
 					srv.arguments = properties;
 					
 					srv.addServlet("/public/*", new FileServlet());
-					srv.addServlet("/private/*", new IOCipherFileServlet(WebServerService.this));
+					
+
+					java.io.File fileIoCipherDb = new java.io.File(getDir(IOCIPHER_FOLDER,
+						Context.MODE_PRIVATE).getAbsoluteFile(),IOCIPHER_FILE);
+					
+					
+					srv.addServlet("/private/*", new IOCipherFileServlet(WebServerService.this, fileIoCipherDb, password));
 
 //					srv.addDefaultServlets(null); // optional file servlet
 					
 					String davUser = "admin";
-					String davPwd = "admin";
-					DavServlet dServlet = new DavServlet(new File("/sdcard"),"sdcard", davUser, davPwd);
+					DavServlet dServlet = new DavServlet(new File("/sdcard"),"sdcard", davUser, password);
 					
 					srv.addServlet("/sdcard/*", dServlet);
 					

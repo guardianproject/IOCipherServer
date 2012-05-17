@@ -61,13 +61,18 @@ public class FsFileResource extends FsResource implements CopyableResource, Dele
 		FileInputStream in = null;
 		try {
 			in = new FileInputStream(file);
+			IOUtils.copy(in, out);		
+			
+			/*
 			if (range != null) {
 		//		log.debug("sendContent: ranged content: " + file.getAbsolutePath());
 				PartialGetHelper.writeRange(in, range, out);
+				
 			} else {
 			//	log.debug("sendContent: send whole file " + file.getAbsolutePath());
-				IOUtils.copy(in, out);				
-			}
+						
+			}(*/
+			
 			out.flush();
 		} catch(ReadingException e) {
 			throw new IOException(e);

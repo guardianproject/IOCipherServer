@@ -57,7 +57,6 @@ public class IOCipherServerActivity extends SherlockActivity {
 	public final static String TAG = "IOCipherServer";
 	
 	private final String ksFileName = "iocipher.bks";
-	private final String ksPassword = "changeme";
 	private final String ksAlias = "twjs";
 	
 	private final static String LOCALHOST = "127.0.0.1";
@@ -142,7 +141,7 @@ public class IOCipherServerActivity extends SherlockActivity {
 
     }
     
-    public void startWebServer()
+    public void startWebServer(String password)
     {
     	
     	if (mService == null)
@@ -155,7 +154,7 @@ public class IOCipherServerActivity extends SherlockActivity {
     	{
     		try
     		{
-    			mService.startServer(mWsPort, mWsUseSSL, getMyAddress());
+    			mService.startServer(mWsPort, mWsUseSSL, getMyAddress(), password);
 
     	    	showStatus();
     		}
@@ -176,11 +175,13 @@ public class IOCipherServerActivity extends SherlockActivity {
     
     private void postBound ()
     {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
-        
+        String password = prefs.getString("prefPass", "");
         if (runOnBind)
         {
-        	startWebServer();
+            
+        	startWebServer(password);
         }
         
         showStatus();
@@ -236,6 +237,7 @@ public class IOCipherServerActivity extends SherlockActivity {
     		msg.append(protocol).append("://").append(ip).append(':').append(mWsPort).append("/sdcard");
     		msg.append("\n\n");
     		
+    		/*
     		String fingerprint = "";
         	
     		
@@ -245,7 +247,7 @@ public class IOCipherServerActivity extends SherlockActivity {
     		{
 	    		CACertManager ccm = new CACertManager();
 	    		try {
-	    			ccm.load(fileKS.getAbsolutePath(), ksPassword);
+	    			ccm.load(fileKS.getAbsolutePath(), password);
 	    			fingerprint = ccm.getFingerprint(ccm.getCertificateChain(ksAlias)[0], "SHA1");
 	    			
 	        		msg.append("SHA1 Fingerprint").append('\n');
@@ -254,7 +256,7 @@ public class IOCipherServerActivity extends SherlockActivity {
 	    		} catch (Exception e) {
 	    			Log.e(TAG,"error loading fingerprint",e);
 	    		} 
-    		}
+    		}*/
     		
     	}
     	else
@@ -439,7 +441,9 @@ udp        0      0 0.0.0.0:698            0.0.0.0:*
 			
 				if (!mService.isServerRunning())
 				{
-					startWebServer();
+
+		            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		        	startWebServer(prefs.getString("prefPass", ""));
 					item.setIcon(android.R.drawable.ic_media_pause);
 				}
 				else
