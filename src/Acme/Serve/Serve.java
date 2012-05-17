@@ -108,6 +108,8 @@ import javax.servlet.http.HttpSessionContext;
 import javax.servlet.http.HttpSessionEvent;
 import javax.servlet.http.HttpSessionListener;
 
+import android.util.Log;
+
 import Acme.Utils;
 
 /// Minimal Java servlet container class.
@@ -164,6 +166,8 @@ import Acme.Utils;
 
 // Inheritance can extend usage of this server
 public class Serve implements ServletContext, Serializable {
+
+	public final static String TAG = "Acme.Serve";
 
     public static final String ARG_PORT = "port";
 
@@ -694,7 +698,7 @@ public class Serve implements ServletContext, Serializable {
     }
 
     protected void console(String msg) {
-	System.out.println(msg);
+	Log.v(TAG, msg);
     }
 
     // Run the server. Returns only on errors.
@@ -1065,8 +1069,9 @@ public class Serve implements ServletContext, Serializable {
     // / Write information to the servlet log.
     // @param message the message to log
     public void log(String message) {
-	Date date = new Date();
-	logStream.println("[" + date.toString() + "] " + message);
+	
+	//logStream.println("[" + date.toString() + "] " + message);
+    	console(message);
     }
 
     public void log(String message, Throwable throwable) {

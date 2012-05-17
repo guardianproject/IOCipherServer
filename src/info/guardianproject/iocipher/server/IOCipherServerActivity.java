@@ -24,12 +24,15 @@ along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 
 import info.guardianproject.iocipher.server.WebServerService.LocalBinder;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Enumeration;
+import java.util.StringTokenizer;
 
 import android.app.AlertDialog;
 import android.content.ComponentName;
@@ -37,6 +40,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -50,12 +54,13 @@ import com.actionbarsherlock.view.MenuItem;
 
 public class IOCipherServerActivity extends SherlockActivity {
 	
-	private final static String TAG = "IOCipherServer";
+	public final static String TAG = "IOCipherServer";
 	
 	private final String ksFileName = "iocipher.bks";
 	private final String ksPassword = "changeme";
 	private final String ksAlias = "twjs";
 	
+	private final static String LOCALHOST = "127.0.0.1";
 	
     boolean mBound = false;
 
@@ -150,7 +155,7 @@ public class IOCipherServerActivity extends SherlockActivity {
     	{
     		try
     		{
-    			mService.startServer(mWsPort, mWsUseSSL, getWifiIp(this).getHostAddress());
+    			mService.startServer(mWsPort, mWsUseSSL, getMyAddress());
 
     	    	showStatus();
     		}
@@ -209,7 +214,7 @@ public class IOCipherServerActivity extends SherlockActivity {
     	TextView tv = (TextView)findViewById(R.id.textStatus);
     	StringBuffer msg = new StringBuffer();
     	
-    	String ip = getWifiIp(this).getHostAddress();
+    	String ip = getMyAddress();
     	
     	msg.append("Wifi IP: ").append(ip);
     	msg.append("\n\n");
@@ -280,25 +285,95 @@ public class IOCipherServerActivity extends SherlockActivity {
 		
 	}
 
+    private String getMyAddress() {
+        WifiManager wifi = (WifiManager)getSystemService( Context.WIFI_SERVICE );
 
-    /**
-     * Gets the IP address of the wifi connection.
-     * @return The integer IP address if wifi enabled, or null if not.
-     */
-    public static InetAddress getWifiIp(Context myContext) {
-            
-            WifiManager wifiMgr = (WifiManager)myContext
-                                    .getSystemService(Context.WIFI_SERVICE);
-            if(isWifiEnabled(myContext)) {
-                    int ipAsInt = wifiMgr.getConnectionInfo().getIpAddress();
-                    if(ipAsInt == 0) {
-                            return null;
-                    } else {
-                            return intToInet(ipAsInt);
+        WifiInfo connectionInfo = wifi.getConnectionInfo();
+        InetAddress address = null;
+        
+        if (connectionInfo == null || connectionInfo.getBSSID() == null) {
+            Log.w(TAG, "Not connected to wifi.  This may not work.");
+            // Get the IP the usual Java way
+            try {
+                for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
+                    NetworkInterface intf = en.nextElement();
+                    for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
+                        InetAddress inetAddress = enumIpAddr.nextElement();
+                        if (!inetAddress.isLoopbackAddress()) {
+                            return inetAddress.getHostAddress();
+                        }
                     }
-            } else {
-                    return null;
+                }        
+            } catch (SocketException e) {
+                Log.e(TAG, "while enumerating interfaces", e);
+                return null;
             }
+       
+        }
+        
+        if (address == null || (address.getAddress() != null  && address.getHostAddress().equals("0.0.0.0")))
+        {
+
+        	//# ifconfig eth0
+        	try
+        	{
+        		String ipcmd = "netstat";
+        		
+        		Process proc = Runtime.getRuntime().exec(ipcmd);
+        		
+        		BufferedReader br = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+        		String line = null;
+        		
+        		/*Proto Recv-Q Send-Q Local Address          Foreign Address        State
+tcp        0      0 127.0.0.1:5037         0.0.0.0:*              LISTEN
+tcp        0      0 0.0.0.0:8080           0.0.0.0:*              LISTEN
+tcp        0      0 0.0.0.0:2006           0.0.0.0:*              LISTEN
+tcp        0      0 0.0.0.0:1212           0.0.0.0:*              LISTEN
+udp        0      0 172.29.149.193:698     0.0.0.0:*             
+udp        0      0 0.0.0.0:698            0.0.0.0:*             
+			*/
+        		String wifiIp = null;
+        		
+        		while ((line = br.readLine()) != null)
+        		{
+        			if (!line.contains("0.0.0.0"))
+        			{
+        				StringTokenizer st = new StringTokenizer(line," ");
+        				String linePart;
+        				
+        				while (st.hasMoreTokens())
+        				{
+        					linePart = st.nextToken();
+        					
+        					if (!linePart.startsWith("0.0.0.0"))
+        						wifiIp = linePart.split(":")[0];
+        				
+        				}
+        				
+        			
+        			}
+        					
+        		}
+        		
+        		if (wifiIp != null)
+        		{
+	        		Log.d(TAG,"got wifi IP from ifconfig: " + wifiIp);
+	        		
+	        		
+	        		return wifiIp;
+        		}	
+        	}
+        	catch (Exception e)
+        	{
+        		 Log.e(TAG, "unknown shell exception when looking up ip address",e);
+                 return null;
+        	}
+//        	/getMyAddress
+        	
+        			
+        }
+        
+        return null;
     }
     
     public static byte byteOfInt(int value, int which) {
@@ -319,61 +394,7 @@ public class IOCipherServerActivity extends SherlockActivity {
         }
     }
     
-    public static boolean isWifiEnabled(Context myContext) {
-
-    	WifiManager wifiMgr = (WifiManager)myContext
-                                    .getSystemService(Context.WIFI_SERVICE);
-            if(wifiMgr.getWifiState() == WifiManager.WIFI_STATE_ENABLED) {
-                    return true;
-            } else {
-                    return false;
-            }
-    }
-    
-	public NetworkInterface getWifiNetworkInterface() {
-		 
-		 WifiManager manager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-
-	    Enumeration<NetworkInterface> interfaces = null;
-	    try {
-	        //the WiFi network interface will be one of these.
-	        interfaces = NetworkInterface.getNetworkInterfaces();
-	    } catch (SocketException e) {
-	        return null;
-	    }
-	 
-	    //We'll use the WiFiManager's ConnectionInfo IP address and compare it with
-	    //the ips of the enumerated NetworkInterfaces to find the WiFi NetworkInterface.
-	 
-	    //Wifi manager gets a ConnectionInfo object that has the ipAdress as an int
-	    //It's endianness could be different as the one on java.net.InetAddress
-	    //maybe this varies from device to device, the android API has no documentation on this method.
-	    int wifiIP = manager.getConnectionInfo().getIpAddress();
-	 
-	    //so I keep the same IP number with the reverse endianness
-	    int reverseWifiIP = Integer.reverseBytes(wifiIP);       
-	 
-	    while (interfaces.hasMoreElements()) {
-	 
-	        NetworkInterface iface = interfaces.nextElement();
-	 
-	        //since each interface could have many InetAddresses...
-	        Enumeration<InetAddress> inetAddresses = iface.getInetAddresses();
-	        while (inetAddresses.hasMoreElements()) {
-	            InetAddress nextElement = inetAddresses.nextElement();
-	            int byteArrayToInt = byteArrayToInt(nextElement.getAddress(),0);
-	 
-	            //grab that IP in byte[] form and convert it to int, then compare it
-	            //to the IP given by the WifiManager's ConnectionInfo. We compare
-	            //in both endianness to make sure we get it.
-	            if (byteArrayToInt == wifiIP || byteArrayToInt == reverseWifiIP) {
-	                return iface;
-	            }
-	        }
-	    }
-	 
-	    return null;
-	}
+  
 	 
 	public static final int byteArrayToInt(byte[] arr, int offset) {
 	    if (arr == null || arr.length - offset < 4)

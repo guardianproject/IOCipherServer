@@ -5,15 +5,14 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.servlet.http.HttpServlet;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.bradmcevoy.http.HttpManager;
 import com.ettrema.http.fs.FileSystemResourceFactory;
-import com.ettrema.http.fs.NullSecurityManager;
 import com.ettrema.http.fs.SimpleSecurityManager;
 
 public class DavServlet extends HttpServlet 
@@ -54,13 +53,11 @@ public class DavServlet extends HttpServlet
 
 	@Override
 	public ServletConfig getServletConfig() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public String getServletInfo() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 

@@ -1,7 +1,5 @@
 package info.guardianproject.iocipher.server;
 
-
-
 import java.io.File;
 
 import android.app.Notification;
@@ -86,6 +84,8 @@ public class WebServerService extends Service
 	public void startServer (int port, boolean useSSL, String ipAddress) throws Exception
 	{
 		
+		//android.os.Debug.waitForDebugger();
+		
 		mPort = port;
 		mUseSsl = useSSL;
 		mIpAddress = ipAddress;
@@ -99,12 +99,19 @@ public class WebServerService extends Service
 			{
 				try
 				{
-					if (mdns == null)
-						mdns = new MdnsManager(WebServerService.this);
 					
-					mdns.register("iocs", "_webdavs._tcp.local", "iocipherwebdav", 8888, "path=/sdcard");
-					mdns.register("iocs-https", "_https._tcp.local", "iocipherweb", 8888, "path=/public");
-			
+					try
+					{
+						if (mdns == null)
+							mdns = new MdnsManager(WebServerService.this);
+						
+						mdns.register("iocs", "_webdavs._tcp.local", "iocipherwebdav", 8888, "path=/sdcard");
+						mdns.register("iocs-https", "_https._tcp.local", "iocipherweb", 8888, "path=/public");
+					}
+					catch (Exception e)
+					{
+						Log.d(TAG, "mdns multicast not working");
+					}
 					
 					srv = new MyServ();
 					
@@ -116,13 +123,11 @@ public class WebServerService extends Service
 					}
 					
 			 		// setting aliases, for an optional file servlet
-		            Acme.Serve.Serve.PathTreeDictionary aliases = new Acme.Serve.Serve.PathTreeDictionary();
-		            aliases.put("/public/*", filePublic);
-		            aliases.put("/public/*", filePublic);
-		            
+		            //Acme.Serve.Serve.PathTreeDictionary aliases = new Acme.Serve.Serve.PathTreeDictionary();
+		            //aliases.put("/public/*", filePublic);
 		            
 			//  note cast name will depend on the class name, since it is anonymous class
-		            srv.setMappingTable(aliases);
+		            //srv.setMappingTable(aliases);
 					// setting properties for the server, and exchangeable Acceptors
 					java.util.Properties properties = new java.util.Properties();
 					properties.put("port", mPort);
@@ -155,7 +160,8 @@ public class WebServerService extends Service
 					
 					srv.arguments = properties;
 					
-					srv.addServlet("/*", new FileServlet());
+					srv.addServlet("/public/*", new FileServlet());
+					srv.addServlet("/private/*", new IOCipherFileServlet(WebServerService.this));
 
 //					srv.addDefaultServlets(null); // optional file servlet
 					
