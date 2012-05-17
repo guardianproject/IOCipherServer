@@ -2,7 +2,7 @@
 <resources>
 
     <string name="btnserv">Activate Server</string>
-    <string name="app_name">IOCipherServer</string>
-	<string name="about">Welcome to IOCipherServer. This is a secure web server for providing access
+    <string name="app_name">SpotSync</string>
+	<string name="about">Welcome to SpotSync. This is a secure server for providing remote access
         to local files on this mobile device.</string>
 </resources>

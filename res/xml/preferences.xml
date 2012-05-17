@@ -16,13 +16,13 @@
 	    <EditTextPreference
 			android:defaultValue="admin"
 			android:key="prefUser"
-			android:title="WebDAV Username"
+			android:title="Username"
 			android:summary="Username for accessing webdav authenticated share"
 			/>
 	     <EditTextPreference
 			android:defaultValue="admin"
 			android:key="prefPass"
-			android:title="WebDAV Password"
+			android:title="Password"
 			android:summary="Password for accessing webdav authenticated share"
 			android:inputType="textPassword"
 			/>
