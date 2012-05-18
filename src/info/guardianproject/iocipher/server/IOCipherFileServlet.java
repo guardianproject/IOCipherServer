@@ -101,7 +101,7 @@ public class IOCipherFileServlet extends HttpServlet {
 	private Context mContext;
 	
 	// / Constructor.
-	public IOCipherFileServlet(Context context, java.io.File db, String password) {
+	public IOCipherFileServlet(Context context) {
 		
 		mContext = context;
 		
@@ -117,18 +117,14 @@ public class IOCipherFileServlet extends HttpServlet {
 		}
 		useCompression = System.getProperty(DEF_USE_COMPRESSION) != null;
 		
-		if (vfs == null)
-		{
-			setUpIOCipher(db, password);
-		}
 	}
 
 	// / Constructor with throttling.
 	// @param throttles filename containing throttle settings
 	// @param charset used for displaying directory page
 	// @see ThrottledOutputStream
-	public IOCipherFileServlet(Context context,java.io.File db, String password, String throttles, String charset) throws IOException {
-		this(context, db, password);
+	public IOCipherFileServlet(Context context,String throttles, String charset) throws IOException {
+		this(context);
 		if (charset != null)
 			this.charSet = charset;
 		readThrottles(throttles);
@@ -471,27 +467,5 @@ public class IOCipherFileServlet extends HttpServlet {
 		
 	}
 	
-	private VirtualFileSystem vfs;
-
-	protected synchronized void setUpIOCipher(java.io.File db, String password) {
-		
-		Log.v("IOCipher", "database file: " + db.getAbsolutePath());
-		if (db.exists())
-			Log.v("IOCipher", "exists: " + db.getAbsolutePath());
-		try {
-			vfs = new VirtualFileSystem(db.getAbsolutePath());
-		} catch (Exception e) {
-			Log.e("IOCipher", e.toString());
-		}
-		vfs.mount(password);
-		
-	}
-
-	@Override
-	public void destroy() {
-		super.destroy();
-		
-		if (vfs != null)
-			vfs.unmount();
-	}
+	
 }

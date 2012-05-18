@@ -26,20 +26,30 @@ import info.guardianproject.iocipher.server.WebServerService.LocalBinder;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.nio.channels.FileChannel;
 import java.util.Enumeration;
 import java.util.StringTokenizer;
 
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -119,6 +129,8 @@ public class IOCipherServerActivity extends SherlockActivity {
         showStatus();
         
 		bindService();
+		
+	    checkForImports();
 	    
 	}
 
@@ -185,6 +197,8 @@ public class IOCipherServerActivity extends SherlockActivity {
         }
         
         showStatus();
+        
+        handleImport();
         
         
     }
@@ -284,6 +298,7 @@ public class IOCipherServerActivity extends SherlockActivity {
 	protected void onStart() {
 		super.onStart();
 		
+	
 		
 	}
 
@@ -483,5 +498,36 @@ udp        0      0 0.0.0.0:698            0.0.0.0:*
 	         .create().show();
 		
 	}
+	
+	Uri intentData = null;
+	
+	private void checkForImports ()
+	{
+		intentData = getIntent().getData();
+		
+		if (intentData == null && getIntent().hasExtra(Intent.EXTRA_STREAM))
+			intentData = (Uri) getIntent().getExtras().get(Intent.EXTRA_STREAM);
+	}
+	
+	private void handleImport ()
+	{
+		if (intentData != null)
+		{
+			try
+			{
+				if (mService != null)
+					mService.importFileToSecureStore(intentData);		
+			}
+			catch (IOException ioe)
+			{
+				Log.e(TAG,"error importing",ioe);
+			}
+			
+			intentData = null;
+		}
+	}
+	
+	 
+   
 	 
 }

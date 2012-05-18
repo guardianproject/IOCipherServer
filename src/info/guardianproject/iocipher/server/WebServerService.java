@@ -1,14 +1,25 @@
 package info.guardianproject.iocipher.server;
 
+import info.guardianproject.iocipher.VirtualFileSystem;
+
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.channels.FileChannel;
 
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
+import android.provider.MediaStore.Images;
 import android.util.Log;
 
 public class WebServerService extends Service
@@ -169,8 +180,13 @@ public class WebServerService extends Service
 					java.io.File fileIoCipherDb = new java.io.File(getDir(IOCIPHER_FOLDER,
 						Context.MODE_PRIVATE).getAbsoluteFile(),IOCIPHER_FILE);
 					
+
+					if (vfs == null)
+					{
+						setUpIOCipher(fileIoCipherDb, password);
+					}
 					
-					srv.addServlet("/private/*", new IOCipherFileServlet(WebServerService.this, fileIoCipherDb, password));
+					srv.addServlet("/private/*", new IOCipherFileServlet(WebServerService.this));
 
 //					srv.addDefaultServlets(null); // optional file servlet
 					
@@ -223,6 +239,10 @@ public class WebServerService extends Service
 		
 		stopForeground(true);
 		
+
+		if (vfs != null)
+			vfs.unmount();
+		
 	}
 
 	public boolean isServerRunning ()
@@ -237,6 +257,8 @@ public class WebServerService extends Service
 	public void onDestroy() {
 		super.onDestroy();
 		stopServer ();
+		
+		
 	}
 
 	/*
@@ -251,4 +273,99 @@ public class WebServerService extends Service
 		
 		return Service.START_STICKY;
 	}*/
+	
+	public void importFileToSecureStore (Uri uriSrc) throws IOException
+	{
+		String targetName = getName(uriSrc);
+		info.guardianproject.iocipher.File fileNew = new info.guardianproject.iocipher.File(targetName);
+		
+		copy (uriSrc, new info.guardianproject.iocipher.FileOutputStream(fileNew));
+	}
+	
+	private String getName (Uri uri)
+	{
+		String name = null;
+		if (uri != null) {
+			Cursor c = getContentResolver().query(uri, null, null, null, null);
+			if (c != null && c.moveToFirst()) {
+				int id = c.getColumnIndex(Images.Media.DATA);
+				if (id != -1) {
+					name = c.getString(id);
+					if (name != null)
+					return new File(name).getName();
+				}
+				
+				id = c.getColumnIndex(Images.Media.DISPLAY_NAME);
+				if (id != -1) {
+					name = c.getString(id);
+				}
+			}
+			
+		}
+		
+		return name;
+	}
+	 private void copy (Uri uriSrc, OutputStream os) throws IOException
+	    {
+	    	
+	    	InputStream is = getContentResolver().openInputStream(uriSrc);
+			
+				
+			copyStreams (is, os);
+
+	    	
+	    }
+	    
+	    private static void copyStreams(InputStream input, OutputStream output) throws IOException {
+	    	
+	        // if both are file streams, use channel IO
+	        if ((output instanceof FileOutputStream) && (input instanceof FileInputStream)) {
+	          try {
+	            FileChannel target = ((FileOutputStream) output).getChannel();
+	            FileChannel source = ((FileInputStream) input).getChannel();
+
+	            source.transferTo(0, Integer.MAX_VALUE, target);
+
+	            source.close();
+	            target.close();
+
+	            return;
+	          } catch (Exception e) { /* failover to byte stream version */
+	          }
+	        }
+
+	        byte[] buf = new byte[8192];
+	        while (true) {
+	          int length = input.read(buf);
+	          if (length < 0)
+	            break;
+	          output.write(buf, 0, length);
+	        }
+
+	        try {
+	          input.close();
+	        } catch (IOException ignore) {
+	        }
+	        try {
+	          output.close();
+	        } catch (IOException ignore) {
+	        }
+	      }
+	    
+	    private VirtualFileSystem vfs;
+
+		protected synchronized void setUpIOCipher(java.io.File db, String password) {
+			
+			Log.v("IOCipher", "database file: " + db.getAbsolutePath());
+			if (db.exists())
+				Log.v("IOCipher", "exists: " + db.getAbsolutePath());
+			try {
+				vfs = new VirtualFileSystem(db.getAbsolutePath());
+			} catch (Exception e) {
+				Log.e("IOCipher", e.toString());
+			}
+			vfs.mount(password);
+			
+		}
+
 }
