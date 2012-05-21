@@ -303,30 +303,30 @@ public class IOCipherServerActivity extends SherlockActivity {
 	}
 
     private String getMyAddress() {
-        WifiManager wifi = (WifiManager)getSystemService( Context.WIFI_SERVICE );
+        
+    	//WifiManager wifi = (WifiManager)getSystemService( Context.WIFI_SERVICE );
 
-        WifiInfo connectionInfo = wifi.getConnectionInfo();
+        //WifiInfo connectionInfo = wifi.getConnectionInfo();
         InetAddress address = null;
         
-        if (connectionInfo == null || connectionInfo.getBSSID() == null) {
-            Log.w(TAG, "Not connected to wifi.  This may not work.");
-            // Get the IP the usual Java way
-            try {
-                for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
-                    NetworkInterface intf = en.nextElement();
-                    for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
-                        InetAddress inetAddress = enumIpAddr.nextElement();
-                        if (!inetAddress.isLoopbackAddress()) {
-                            return inetAddress.getHostAddress();
-                        }
+        Log.w(TAG, "Not connected to wifi.  This may not work.");
+        // Get the IP the usual Java way
+        try {
+            for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
+                NetworkInterface intf = en.nextElement();
+                for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
+                    InetAddress inetAddress = enumIpAddr.nextElement();
+                    if (!inetAddress.isLoopbackAddress()) {
+                        return inetAddress.getHostAddress();
                     }
-                }        
-            } catch (SocketException e) {
-                Log.e(TAG, "while enumerating interfaces", e);
-                return null;
-            }
-       
+                }
+            }        
+        } catch (SocketException e) {
+            Log.e(TAG, "while enumerating interfaces", e);
+            return null;
         }
+       
+     
         
         if (address == null || (address.getAddress() != null  && address.getHostAddress().equals("0.0.0.0")))
         {
@@ -518,7 +518,7 @@ udp        0      0 0.0.0.0:698            0.0.0.0:*
 				if (mService != null)
 					mService.importFileToSecureStore(intentData);		
 			}
-			catch (IOException ioe)
+			catch (Exception ioe)
 			{
 				Log.e(TAG,"error importing",ioe);
 			}

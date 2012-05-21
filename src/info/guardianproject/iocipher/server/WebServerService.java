@@ -1,14 +1,14 @@
 package info.guardianproject.iocipher.server;
 
+import info.guardianproject.iocipher.File;
+import info.guardianproject.iocipher.FileOutputStream;
+import info.guardianproject.iocipher.FileWriter;
 import info.guardianproject.iocipher.VirtualFileSystem;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.channels.FileChannel;
 
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -130,7 +130,7 @@ public class WebServerService extends Service
 					
 					srv = new MyServ();
 					
-					File filePublic = new java.io.File("/sdcard/public");
+					java.io.File filePublic = new java.io.File("/sdcard/public");
 					
 					if (!filePublic.exists())
 					{
@@ -154,7 +154,7 @@ public class WebServerService extends Service
 						//properties.setProperty("socketFactory", "Acme.Serve.SSLServerSocketFactory");
 						properties.setProperty("acceptorImpl", "Acme.Serve.SSLAcceptor");
 						
-						File fileKS = new File(WebServerService.this.getFilesDir(),"iocipher.bks");
+						java.io.File fileKS = new java.io.File(WebServerService.this.getFilesDir(),"iocipher.bks");
 						
 						if (!fileKS.exists())
 						{
@@ -191,7 +191,7 @@ public class WebServerService extends Service
 //					srv.addDefaultServlets(null); // optional file servlet
 					
 					String davUser = "admin";
-					DavServlet dServlet = new DavServlet(new File("/sdcard"),"sdcard", davUser, password);
+					DavServlet dServlet = new DavServlet(new java.io.File("/sdcard"),"sdcard", davUser, password);
 					
 					srv.addServlet("/sdcard/*", dServlet);
 					
@@ -279,7 +279,9 @@ public class WebServerService extends Service
 		String targetName = getName(uriSrc);
 		info.guardianproject.iocipher.File fileNew = new info.guardianproject.iocipher.File(targetName);
 		
-		copy (uriSrc, new info.guardianproject.iocipher.FileOutputStream(fileNew));
+		InputStream is = getContentResolver().openInputStream(uriSrc);
+		
+		copyStreamToFile (is, fileNew);
 	}
 	
 	private String getName (Uri uri)
@@ -305,19 +307,10 @@ public class WebServerService extends Service
 		
 		return name;
 	}
-	 private void copy (Uri uriSrc, OutputStream os) throws IOException
-	    {
-	    	
-	    	InputStream is = getContentResolver().openInputStream(uriSrc);
-			
-				
-			copyStreams (is, os);
-
-	    	
-	    }
 	    
-	    private static void copyStreams(InputStream input, OutputStream output) throws IOException {
+	    private static void copyStreamToFile(InputStream input, File fileOut) throws IOException {
 	    	
+	    	/*
 	        // if both are file streams, use channel IO
 	        if ((output instanceof FileOutputStream) && (input instanceof FileInputStream)) {
 	          try {
@@ -330,25 +323,28 @@ public class WebServerService extends Service
 	            target.close();
 
 	            return;
-	          } catch (Exception e) { /* failover to byte stream version */
+	          } catch (Exception e) { 
 	          }
+	        }*/
+	    	
+	    	BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(fileOut));
+	    	byte[] buf = new byte[1024];
+	        int len = -1;
+	        
+	        while ((len = input.read(buf))!=-1) {
+	          out.write(buf,0,len);
 	        }
-
-	        byte[] buf = new byte[8192];
-	        while (true) {
-	          int length = input.read(buf);
-	          if (length < 0)
-	            break;
-	          output.write(buf, 0, length);
-	        }
-
+	        
 	        try {
 	          input.close();
 	        } catch (IOException ignore) {
+	        	Log.e(TAG, "error closing input",ignore);
 	        }
 	        try {
-	          output.close();
+	          out.close();
 	        } catch (IOException ignore) {
+
+	        	Log.e(TAG, "error closing output",ignore);
 	        }
 	      }
 	    
