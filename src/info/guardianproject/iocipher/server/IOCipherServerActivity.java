@@ -251,15 +251,15 @@ public class IOCipherServerActivity extends SherlockActivity {
     		if (!mWsUseSSL)
     			protocol = "http";
     	
-    		msg.append("Web Browser:").append('\n');
+    		msg.append("Public Share:").append('\n');
     		msg.append(protocol).append("://").append(ip).append(':').append(mWsPort).append("/public");
     		msg.append("\n\n");
     		
-    		msg.append("WebDAV Share:").append('\n');
-    		msg.append(protocol).append("://").append(ip).append(':').append(mWsPort).append("/sdcard");
+    		msg.append("Private Share:").append('\n');
+    		msg.append(protocol).append("://").append(ip).append(':').append(mWsPort).append("/private");
     		msg.append("\n\n");
     		
-    		/*
+    		
     		String fingerprint = "";
         	
     		
@@ -269,6 +269,10 @@ public class IOCipherServerActivity extends SherlockActivity {
     		{
 	    		CACertManager ccm = new CACertManager();
 	    		try {
+
+	    	        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+
+	    	        String password = prefs.getString("prefPass", "");
 	    			ccm.load(fileKS.getAbsolutePath(), password);
 	    			fingerprint = ccm.getFingerprint(ccm.getCertificateChain(ksAlias)[0], "SHA1");
 	    			
@@ -278,7 +282,7 @@ public class IOCipherServerActivity extends SherlockActivity {
 	    		} catch (Exception e) {
 	    			Log.e(TAG,"error loading fingerprint",e);
 	    		} 
-    		}*/
+    		}
     		
     	}
     	else
