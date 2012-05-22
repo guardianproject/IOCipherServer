@@ -53,7 +53,9 @@ import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.TextView;
@@ -198,8 +200,14 @@ public class IOCipherServerActivity extends SherlockActivity {
         
         showStatus();
         
-        handleImport();
         
+        new Thread ()
+        {
+        	public void run ()
+        	{
+        		handleImport();
+        	}
+        }.start();
         
     }
     /** Defines callbacks for service binding, passed to bindService() */
@@ -516,7 +524,19 @@ udp        0      0 0.0.0.0:698            0.0.0.0:*
 			try
 			{
 				if (mService != null)
+				{
+					Message msg = new Message();
+					msg.getData().putInt("action", 0);
+					handler.sendMessage(msg);
+					
 					mService.importFileToSecureStore(intentData);		
+
+					Message msg2 = new Message();
+					msg2.getData().putInt("action", 1);
+					handler.sendMessage(msg2);
+					
+					
+				}
 			}
 			catch (Exception ioe)
 			{
@@ -527,7 +547,34 @@ udp        0      0 0.0.0.0:698            0.0.0.0:*
 		}
 	}
 	
-	 
+	ProgressDialog pd;
+	
+   private Handler handler = new Handler() {
+       @Override
+       public void handleMessage(Message msg) {
+           
+    	   int action = msg.getData().getInt("action");
+    	   
+    	   if (action==0)
+    	   {
+    		   pd = ProgressDialog.show(IOCipherServerActivity.this, "Working..", "Importing File To Secure Store", true,
+                       false);
+    	   }
+    	   else if (action == 1)
+    	   {
+    		   if (pd != null)
+    			   pd.cancel();
+    	   }
+    	   else if (action == 2)
+    	   {
+    		   String status = msg.getData().getString("status");
+    		   if (pd != null)
+    			   pd.setMessage(status);
+    	   }
+    	   
+
+       }
+   };
    
 	 
 }
