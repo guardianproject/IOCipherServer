@@ -279,6 +279,13 @@ public class WebServerService extends Service
 		String targetName = getName(uriSrc);
 		info.guardianproject.iocipher.File fileNew = new info.guardianproject.iocipher.File(targetName);
 		
+		int i = 1;
+		
+		while (fileNew.exists())
+		{
+			fileNew = new info.guardianproject.iocipher.File((i++) + '.' + targetName);
+		}
+		
 		InputStream is = getContentResolver().openInputStream(uriSrc);
 		
 		copyStreamToFile (is, fileNew);
