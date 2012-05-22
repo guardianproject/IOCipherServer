@@ -99,7 +99,7 @@ public class WebServerService extends Service
 	public void startServer (int port, boolean useSSL, String ipAddress, final String password) throws Exception
 	{
 		
-		//android.os.Debug.waitForDebugger();
+		android.os.Debug.waitForDebugger();
 		
 		mPort = port;
 		mUseSsl = useSSL;
@@ -120,7 +120,7 @@ public class WebServerService extends Service
 						if (mdns == null)
 							mdns = new MdnsManager(WebServerService.this);
 						
-						mdns.register("iocs", "_webdavs._tcp.local", "iocipherwebdav", 8888, "path=/sdcard");
+						//mdns.register("iocs", "_webdavs._tcp.local", "iocipherwebdav", 8888, "path=/sdcard");
 						mdns.register("iocs-https", "_https._tcp.local", "iocipherweb", 8888, "path=/public");
 					}
 					catch (Exception e)
@@ -162,10 +162,9 @@ public class WebServerService extends Service
 							String cn = "localhost";
 							String on = "iocipher";
 							
-							KeyStoreGenerator.generateKeyStore(fileKS, alias, 2048, password, cn, on, on, "New York", "New York", "US");
+							KeyStoreGenerator.generateKeyStore(fileKS, alias, 1024, password, cn, on, on, "xx", "xx", "xx");
 					
 						}
-						
 				
 						properties.setProperty("keystoreFile",fileKS.getAbsolutePath());
 						properties.setProperty("keystorePass",password);
@@ -175,7 +174,6 @@ public class WebServerService extends Service
 					srv.arguments = properties;
 					
 					srv.addServlet("/public/*", new FileServlet());
-					
 
 					java.io.File fileIoCipherDb = new java.io.File(getDir(IOCIPHER_FOLDER,
 						Context.MODE_PRIVATE).getAbsoluteFile(),IOCIPHER_FILE);
@@ -189,13 +187,59 @@ public class WebServerService extends Service
 					srv.addServlet("/private/*", new IOCipherFileServlet(WebServerService.this));
 
 //					srv.addDefaultServlets(null); // optional file servlet
-					
+				
+					/*
 					String davUser = "admin";
 					DavServlet dServlet = new DavServlet(new java.io.File("/sdcard"),"sdcard", davUser, password);
-					
-					srv.addServlet("/sdcard/*", dServlet);
+				
+					srv.addServlet("/mount/*", dServlet);
+					*/
 					
 					srv.serve();
+				}
+				catch (Exception e)
+				{
+					handleException ("error starting server", e);
+				}
+		
+			}
+		};
+		
+		mWsThread.start();
+
+		
+	}
+	
+	public void startBroadcast (int port, boolean useSSL, String ipAddress) throws Exception
+	{
+		
+		
+		mPort = port;
+		mUseSsl = useSSL;
+		mIpAddress = ipAddress;
+		
+		mWsThread = new Thread ()
+		{
+			
+			public void run ()
+			{
+				try
+				{
+					
+					try
+					{
+						if (mdns == null)
+							mdns = new MdnsManager(WebServerService.this);
+						
+						//mdns.register("iocs", "_webdavs._tcp.local", "iocipherwebdav", 8888, "path=/sdcard");
+						mdns.register("iocs-https", "_https._tcp.local", "iocipherweb", mPort, "path=/public");
+					}
+					catch (Exception e)
+					{
+						Log.d(TAG, "mdns multicast not working");
+					}
+					
+					
 				}
 				catch (Exception e)
 				{
