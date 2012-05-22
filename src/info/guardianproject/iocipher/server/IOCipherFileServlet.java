@@ -238,7 +238,7 @@ public class IOCipherFileServlet extends HttpServlet {
 			headOnly = true;
 		}
 		// TODO add processing If-None-Match, If-Unmodified-Since and If-Match
-		String contentType = getServletContext().getMimeType(file.getName());
+		String contentType = getContentType(file.getName());
 		if (contentType != null)
 			res.setContentType(contentType);
 		long flen = file.length();
@@ -336,6 +336,28 @@ public class IOCipherFileServlet extends HttpServlet {
 				out.close();
 			}
 		}
+	}
+	
+	private String getContentType (String filename)
+	{
+		String result = getServletContext().getMimeType(filename);
+		
+		if (result == null)
+		{
+			filename = filename.toLowerCase();
+			
+			if (filename.endsWith("mp4"))
+				result = "video/mp4";
+			else if (filename.endsWith("3gp"))
+				result = "video/3gpp";
+			else
+				result = "application/octet-stream";
+			
+		}
+		
+		
+		return result;
+		
 	}
 
 	// / Copy a file from in to out.
