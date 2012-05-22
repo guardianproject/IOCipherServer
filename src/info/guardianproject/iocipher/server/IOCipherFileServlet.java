@@ -240,6 +240,8 @@ public class IOCipherFileServlet extends HttpServlet {
 	private void serveFile(HttpServletRequest req, HttpServletResponse res, boolean headOnly, String path, File file)
 			throws IOException {
 		log("getting " + file);
+		
+		/*
 		if (logenabled) {
 			Enumeration enh = req.getHeaderNames();
 			while (enh.hasMoreElements()) {
@@ -247,6 +249,8 @@ public class IOCipherFileServlet extends HttpServlet {
 				log("hdr:" + hn + ":" + req.getHeader(hn));
 			}
 		}
+		*/
+		
 		if (!file.canRead()) {
 			res.sendError(HttpServletResponse.SC_FORBIDDEN);
 			return;

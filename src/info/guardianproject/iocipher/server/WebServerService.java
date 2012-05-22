@@ -40,7 +40,9 @@ public class WebServerService extends Service
 
 	private String IOCIPHER_FOLDER = "iocipher";
 	private String IOCIPHER_FILE = "iocipher.db";
-	
+
+    private VirtualFileSystem vfs;
+    
     /**
      * Class used for the client Binder.  Because we know this service always
      * runs in the same process as its clients, we don't need to deal with IPC.
@@ -96,16 +98,85 @@ public class WebServerService extends Service
 	
 	}
 	
-	public void startServer (int port, boolean useSSL, String ipAddress, final String password) throws Exception
+	public void startServer (int port, boolean useSSL, String ipAddress, final String password) throws IllegalArgumentException, Exception
 	{
 		
-		android.os.Debug.waitForDebugger();
+	//	android.os.Debug.waitForDebugger();
 		
 		mPort = port;
 		mUseSsl = useSSL;
 		mIpAddress = ipAddress;
 		
+		srv = new MyServ();
+		
+		java.io.File filePublic = new java.io.File("/sdcard/public");
+		
+		if (!filePublic.exists())
+		{
+			filePublic.mkdir();
+		}
+		
+ 		// setting aliases, for an optional file servlet
+        //Acme.Serve.Serve.PathTreeDictionary aliases = new Acme.Serve.Serve.PathTreeDictionary();
+        //aliases.put("/public/*", filePublic);
+        
+//  note cast name will depend on the class name, since it is anonymous class
+        //srv.setMappingTable(aliases);
+		// setting properties for the server, and exchangeable Acceptors
+		java.util.Properties properties = new java.util.Properties();
+		properties.put("port", mPort);
+		properties.setProperty(Acme.Serve.Serve.ARG_NOHUP, "nohup");
+		
+		if (mUseSsl)
+		{
+			properties.setProperty("secure", "true");
+			//properties.setProperty("socketFactory", "Acme.Serve.SSLServerSocketFactory");
+			properties.setProperty("acceptorImpl", "Acme.Serve.SSLAcceptor");
+			
+			java.io.File fileKS = new java.io.File(WebServerService.this.getFilesDir(),"iocipher.bks");
+			
+			if (!fileKS.exists())
+			{
+				String alias = "twjs";
+				String cn = "localhost";
+				String on = "iocipher";
+				
+				KeyStoreGenerator.generateKeyStore(fileKS, alias, 1024, password, cn, on, on, "xx", "xx", "xx");
+		
+			}
+	
+			properties.setProperty("keystoreFile",fileKS.getAbsolutePath());
+			properties.setProperty("keystorePass",password);
+			properties.setProperty("keystoreType",CACertManager.KEYSTORE_TYPE);
+		}
+		
+		srv.arguments = properties;
+		
+		srv.addServlet("/public/*", new FileServlet(filePublic));
+
+		
+		java.io.File fileIoCipherDb = new java.io.File(getDir(IOCIPHER_FOLDER,
+			Context.MODE_PRIVATE).getAbsoluteFile(),IOCIPHER_FILE);
+		
+
+		if (vfs == null)
+		{
+			setUpIOCipher(fileIoCipherDb, password);
+		}
+		
+		srv.addServlet("/private/*", new IOCipherFileServlet(WebServerService.this));
+
+//		srv.addDefaultServlets(null); // optional file servlet
+	
+		/*
+		String davUser = "admin";
+		DavServlet dServlet = new DavServlet(new java.io.File("/sdcard"),"sdcard", davUser, password);
+	
+		srv.addServlet("/mount/*", dServlet);
+		*/
+
 		startNotification();
+		
 		
 		mWsThread = new Thread ()
 		{
@@ -117,72 +188,6 @@ public class WebServerService extends Service
 					
 					
 					
-					srv = new MyServ();
-					
-					java.io.File filePublic = new java.io.File("/sdcard/public");
-					
-					if (!filePublic.exists())
-					{
-						filePublic.mkdir();
-					}
-					
-			 		// setting aliases, for an optional file servlet
-		            //Acme.Serve.Serve.PathTreeDictionary aliases = new Acme.Serve.Serve.PathTreeDictionary();
-		            //aliases.put("/public/*", filePublic);
-		            
-			//  note cast name will depend on the class name, since it is anonymous class
-		            //srv.setMappingTable(aliases);
-					// setting properties for the server, and exchangeable Acceptors
-					java.util.Properties properties = new java.util.Properties();
-					properties.put("port", mPort);
-					properties.setProperty(Acme.Serve.Serve.ARG_NOHUP, "nohup");
-					
-					if (mUseSsl)
-					{
-						properties.setProperty("secure", "true");
-						//properties.setProperty("socketFactory", "Acme.Serve.SSLServerSocketFactory");
-						properties.setProperty("acceptorImpl", "Acme.Serve.SSLAcceptor");
-						
-						java.io.File fileKS = new java.io.File(WebServerService.this.getFilesDir(),"iocipher.bks");
-						
-						if (!fileKS.exists())
-						{
-							String alias = "twjs";
-							String cn = "localhost";
-							String on = "iocipher";
-							
-							KeyStoreGenerator.generateKeyStore(fileKS, alias, 1024, password, cn, on, on, "xx", "xx", "xx");
-					
-						}
-				
-						properties.setProperty("keystoreFile",fileKS.getAbsolutePath());
-						properties.setProperty("keystorePass",password);
-						properties.setProperty("keystoreType",CACertManager.KEYSTORE_TYPE);
-					}
-					
-					srv.arguments = properties;
-					
-					srv.addServlet("/public/*", new FileServlet(filePublic));
-
-					java.io.File fileIoCipherDb = new java.io.File(getDir(IOCIPHER_FOLDER,
-						Context.MODE_PRIVATE).getAbsoluteFile(),IOCIPHER_FILE);
-					
-
-					if (vfs == null)
-					{
-						setUpIOCipher(fileIoCipherDb, password);
-					}
-					
-					srv.addServlet("/private/*", new IOCipherFileServlet(WebServerService.this));
-
-//					srv.addDefaultServlets(null); // optional file servlet
-				
-					/*
-					String davUser = "admin";
-					DavServlet dServlet = new DavServlet(new java.io.File("/sdcard"),"sdcard", davUser, password);
-				
-					srv.addServlet("/mount/*", dServlet);
-					*/
 					
 					srv.serve();
 				}
@@ -350,25 +355,8 @@ public class WebServerService extends Service
 	    
 	    private static void copyStreamToFile(InputStream input, File fileOut) throws IOException {
 	    	
-	    	/*
-	        // if both are file streams, use channel IO
-	        if ((output instanceof FileOutputStream) && (input instanceof FileInputStream)) {
-	          try {
-	            FileChannel target = ((FileOutputStream) output).getChannel();
-	            FileChannel source = ((FileInputStream) input).getChannel();
-
-	            source.transferTo(0, Integer.MAX_VALUE, target);
-
-	            source.close();
-	            target.close();
-
-	            return;
-	          } catch (Exception e) { 
-	          }
-	        }*/
-	    	
 	    	BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(fileOut));
-	    	byte[] buf = new byte[1024];
+	    	byte[] buf = new byte[8096];
 	        int len = -1;
 	        
 	        while ((len = input.read(buf))!=-1) {
@@ -388,9 +376,9 @@ public class WebServerService extends Service
 	        }
 	      }
 	    
-	    private VirtualFileSystem vfs;
 
-		protected synchronized void setUpIOCipher(java.io.File db, String password) {
+		protected synchronized void setUpIOCipher(java.io.File db, String password) throws IllegalArgumentException
+		{
 			
 			Log.v("IOCipher", "database file: " + db.getAbsolutePath());
 			if (db.exists())

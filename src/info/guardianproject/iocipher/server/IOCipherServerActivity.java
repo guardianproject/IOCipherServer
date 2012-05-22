@@ -26,18 +26,11 @@ import info.guardianproject.iocipher.server.WebServerService.LocalBinder;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.nio.channels.FileChannel;
 import java.util.Enumeration;
 import java.util.StringTokenizer;
 
@@ -45,20 +38,22 @@ import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
 import android.net.Uri;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockActivity;
 import com.actionbarsherlock.view.Menu;
@@ -82,7 +77,8 @@ public class IOCipherServerActivity extends SherlockActivity {
 	private boolean mWsUseSSL = true;
 	private boolean runOnBind = false;
 	
-
+	private String adminPwd = null;
+	
 	private MenuItem mMenuStartTop;
 	
     /** Called when the activity is first created. */
@@ -91,36 +87,40 @@ public class IOCipherServerActivity extends SherlockActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         
-        setPreferences();
 
-        /*
-        tButton = (ToggleButton)findViewById(R.id.toggleButton1);
-        tButton.setEnabled(false);
-        tButton.setOnCheckedChangeListener(new OnCheckedChangeListener () {
-
-			@Override
-			public void onCheckedChanged(CompoundButton buttonView,
-					boolean isChecked) {
-				
-				if (isChecked)
-					startWebServer();
-				else
-					stopWebServer();
-				
-			}
-        	
-        });
-        */
         
     }
     
-    private void setPreferences ()
+    
+    private void askForPassword ()
     {
     	
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        
-        mWsUseSSL = prefs.getBoolean("useSSL", true);
-        mWsPort = Integer.parseInt(prefs.getString("prefPort", "" + DEFAULT_PORT));
+    	 // This example shows how to add a custom layout to an AlertDialog
+        LayoutInflater factory = LayoutInflater.from(this);
+        final View textEntryView = factory.inflate(R.layout.alert_dialog_text_entry, null);
+        new AlertDialog.Builder(this)
+            .setTitle(getString(R.string.app_name))
+            .setView(textEntryView)
+            .setMessage(R.string.password_msg)
+            .setPositiveButton(getString(R.string.button_ok), new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int whichButton) {
+
+                	EditText eText = ((android.widget.EditText)textEntryView.findViewById(R.id.password_edit));
+                	adminPwd = eText.getText().toString();
+            	
+                	postBound();
+
+                }
+            })
+            .setNegativeButton(getString(R.string.button_cancel), new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int whichButton) {
+
+                    /* User clicked cancel so do some stuff */
+                	IOCipherServerActivity.this.finish();
+                }
+            })
+            .create().show();
+	
     }
     
     
@@ -128,8 +128,6 @@ public class IOCipherServerActivity extends SherlockActivity {
 	protected void onResume() {
 		super.onResume();
 		
-        showStatus();
-        
 		bindService();
 		
 	    checkForImports();
@@ -155,7 +153,7 @@ public class IOCipherServerActivity extends SherlockActivity {
 
     }
     
-    public void startWebServer(String password)
+    public void startWebServer()
     {
     	
     	if (mService == null)
@@ -164,17 +162,33 @@ public class IOCipherServerActivity extends SherlockActivity {
     		bindService();
     		
     	}
-    	else
+    	else if (!mService.isServerRunning())
     	{
+
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+            
+            mWsUseSSL = prefs.getBoolean("useSSL", true);
+            mWsPort = Integer.parseInt(prefs.getString("prefPort", "" + DEFAULT_PORT));
+            
     		try
     		{
-    			mService.startServer(mWsPort, mWsUseSSL, getMyAddress(), password);
+    			mService.startServer(mWsPort, mWsUseSSL, getMyAddress(), adminPwd);
 
     	    	showStatus();
+    		}
+    		catch (IllegalArgumentException e)
+    		{
+    			adminPwd = null;
+    			
+    			Log.e(TAG, "unable to start secure server",e);
+    			
     		}
     		catch (Exception e)
     		{
     			Log.e(TAG, "unable to start secure server",e);
+    			
+    			Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
+    			
     		}
     		
     	}
@@ -189,26 +203,30 @@ public class IOCipherServerActivity extends SherlockActivity {
     
     private void postBound ()
     {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
-        String password = prefs.getString("prefPass", "");
-        if (runOnBind)
-        {
-            
-        	startWebServer(password);
-        }
-        
-        showStatus();
-        
-        
-        new Thread ()
-        {
-        	public void run ()
-        	{
-        		handleImport();
-        	}
-        }.start();
-        
+    	if (!mService.isServerRunning())
+    	{
+    		if (adminPwd == null)
+    		{
+    			askForPassword ();
+    		}
+    		else if (runOnBind)
+    		{    
+    			startWebServer();
+    		}
+    	}
+    	else
+    	{
+    		showStatus();
+	        new Thread ()
+	        {
+	        	public void run ()
+	        	{
+	        		handleImport();
+	        	}
+	        }.start();
+    	}
+    	
     }
     /** Defines callbacks for service binding, passed to bindService() */
     private ServiceConnection mConnection = new ServiceConnection() {
@@ -260,30 +278,28 @@ public class IOCipherServerActivity extends SherlockActivity {
     		msg.append("\n\n");
     		
     		
-    		String fingerprint = "";
-        	
-    		
-        	File fileKS = new File(this.getFilesDir(),ksFileName);
-    	
-    		if (fileKS.exists())
+    		if (adminPwd != null)
     		{
-	    		CACertManager ccm = new CACertManager();
-	    		try {
-
-	    	        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-
-	    	        String password = prefs.getString("prefPass", "");
-	    			ccm.load(fileKS.getAbsolutePath(), password);
-	    			fingerprint = ccm.getFingerprint(ccm.getCertificateChain(ksAlias)[0], "SHA1");
-	    			
-	        		msg.append("SHA1 Fingerprint").append('\n');
-	        		msg.append(fingerprint);
+	    		String fingerprint = "";
+	        	
+	        	File fileKS = new File(this.getFilesDir(),ksFileName);
+	    	
+	    		if (fileKS.exists())
+	    		{
+		    		CACertManager ccm = new CACertManager();
+		    		try {
 	
-	    		} catch (Exception e) {
-	    			Log.e(TAG,"error loading fingerprint",e);
-	    		} 
+		    			ccm.load(fileKS.getAbsolutePath(), adminPwd);
+		    			fingerprint = ccm.getFingerprint(ccm.getCertificateChain(ksAlias)[0], "SHA1");
+		    			
+		        		msg.append("SHA1 Fingerprint").append('\n');
+		        		msg.append(fingerprint);
+		
+		    		} catch (Exception e) {
+		    			Log.e(TAG,"error loading fingerprint",e);
+		    		} 
+	    		}
     		}
-    		
     	}
     	else
     	{
@@ -469,8 +485,7 @@ udp        0      0 0.0.0.0:698            0.0.0.0:*
 				if (!mService.isServerRunning())
 				{
 
-		            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-		        	startWebServer(prefs.getString("prefPass", ""));
+		        	startWebServer();
 					item.setIcon(android.R.drawable.ic_media_pause);
 				}
 				else
