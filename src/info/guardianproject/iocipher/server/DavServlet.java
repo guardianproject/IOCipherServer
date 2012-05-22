@@ -11,13 +11,13 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.bradmcevoy.http.HttpManager;
-import com.ettrema.http.fs.FileSystemResourceFactory;
-import com.ettrema.http.fs.SimpleSecurityManager;
+//import com.bradmcevoy.http.HttpManager;
+//import com.ettrema.http.fs.FileSystemResourceFactory;
+//import com.ettrema.http.fs.SimpleSecurityManager;
 
 public class DavServlet extends HttpServlet 
 {
-	HttpManager httpManager;
+	//HttpManager httpManager;
 	File fileRoot;
 	String basePath;
 	String user;
@@ -36,8 +36,8 @@ public class DavServlet extends HttpServlet
         HttpServletResponse resp = (HttpServletResponse) servletResponse; 
         try { 
         	
-        	
-            httpManager.process( new com.bradmcevoy.http.ServletRequest(req, null), new com.bradmcevoy.http.ServletResponse(resp) ); 
+        	//TODO removing DAV for now
+            //httpManager.process( new com.bradmcevoy.http.ServletRequest(req, null), new com.bradmcevoy.http.ServletResponse(resp) ); 
         } finally { 
             servletResponse.getOutputStream().flush(); 
             servletResponse.flushBuffer(); 
@@ -64,6 +64,7 @@ public class DavServlet extends HttpServlet
 	@Override
 	public void init(ServletConfig arg0) throws ServletException {
 
+		/*
 		 System.setProperty 
 		 ("org.xml.sax.driver","org.xmlpull.v1.sax2.Driver"); 
 		 
@@ -78,7 +79,7 @@ public class DavServlet extends HttpServlet
 		fsrf.setDigestAllowed(true);
 		
 		httpManager = new HttpManager(fsrf);
-		
+		*/
 	} 
  
 }
