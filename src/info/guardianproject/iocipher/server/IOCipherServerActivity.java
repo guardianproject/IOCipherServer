@@ -252,11 +252,11 @@ public class IOCipherServerActivity extends SherlockActivity {
     			protocol = "http";
     	
     		msg.append("Public Share:").append('\n');
-    		msg.append(protocol).append("://").append(ip).append(':').append(mWsPort).append("/public");
+    		msg.append(protocol).append("://").append(ip).append(':').append(mWsPort).append("/public/");
     		msg.append("\n\n");
     		
     		msg.append("Private Share:").append('\n');
-    		msg.append(protocol).append("://").append(ip).append(':').append(mWsPort).append("/private");
+    		msg.append(protocol).append("://").append(ip).append(':').append(mWsPort).append("/private/");
     		msg.append("\n\n");
     		
     		

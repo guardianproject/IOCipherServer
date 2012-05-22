@@ -115,18 +115,7 @@ public class WebServerService extends Service
 				try
 				{
 					
-					try
-					{
-						if (mdns == null)
-							mdns = new MdnsManager(WebServerService.this);
-						
-						//mdns.register("iocs", "_webdavs._tcp.local", "iocipherwebdav", 8888, "path=/sdcard");
-						mdns.register("iocs-https", "_https._tcp.local", "iocipherweb", 8888, "path=/public");
-					}
-					catch (Exception e)
-					{
-						Log.d(TAG, "mdns multicast not working");
-					}
+					
 					
 					srv = new MyServ();
 					
@@ -173,7 +162,7 @@ public class WebServerService extends Service
 					
 					srv.arguments = properties;
 					
-					srv.addServlet("/public/*", new FileServlet());
+					srv.addServlet("/public/*", new FileServlet(filePublic));
 
 					java.io.File fileIoCipherDb = new java.io.File(getDir(IOCIPHER_FOLDER,
 						Context.MODE_PRIVATE).getAbsoluteFile(),IOCIPHER_FILE);

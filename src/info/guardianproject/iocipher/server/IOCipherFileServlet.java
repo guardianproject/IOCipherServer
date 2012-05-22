@@ -33,7 +33,6 @@ package info.guardianproject.iocipher.server;
 
 import info.guardianproject.iocipher.File;
 import info.guardianproject.iocipher.FileInputStream;
-import info.guardianproject.iocipher.VirtualFileSystem;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -47,6 +46,7 @@ import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.zip.GZIPOutputStream;
 
 import javax.servlet.ServletConfig;
@@ -55,13 +55,17 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import android.content.Context;
-import android.util.Log;
+import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload.FileUploadException;
+import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.io.FilenameUtils;
 
 import Acme.Utils;
 import Acme.Serve.Serve;
 import Acme.Serve.ThrottleItem;
 import Acme.Serve.ThrottledOutputStream;
+import android.content.Context;
 
 /// Servlet similar to a standard httpd.
 // <P>
@@ -163,6 +167,11 @@ public class IOCipherFileServlet extends HttpServlet {
 			headOnly = false;
 		else if (req.getMethod().equalsIgnoreCase("head"))
 			headOnly = true;
+		else if (req.getMethod().equalsIgnoreCase("post"))
+		{
+			doPost(req, res);
+			return;
+		}
 		else {
 			res.sendError(HttpServletResponse.SC_NOT_IMPLEMENTED, "Method "+req.getMethod());
 			return;
@@ -173,6 +182,27 @@ public class IOCipherFileServlet extends HttpServlet {
 		//res.setBufferSize(Utils.COPY_BUF_SIZE/2);
 		dispatchPathname(req, res, headOnly, path);
 	}
+	
+	@Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        try {
+            List<FileItem> items = new ServletFileUpload(new DiskFileItemFactory()).parseRequest(request);
+            for (FileItem item : items) {
+                if (item.getFieldName().equals("file")) {
+                    String filename = FilenameUtils.getName(item.getName());
+                    InputStream content = item.getInputStream();
+                    // ... Do your job here.
+
+                    response.setContentType("text/plain");
+                    response.setCharacterEncoding("UTF-8");
+                    response.getWriter().write("File " + filename + " successfully uploaded");
+                    return;
+                }
+            }
+        } catch (FileUploadException e) {
+            throw new ServletException("Parsing file upload failed.", e);
+        }
+    }
 
 	private void dispatchPathname(HttpServletRequest req, HttpServletResponse res, boolean headOnly, String path)
 			throws IOException {
@@ -385,13 +415,20 @@ public class IOCipherFileServlet extends HttpServlet {
 			PrintStream p = new PrintStream(new BufferedOutputStream(out), false, charSet); // 1.4
 			p.println("<HTML><HEAD>");
 			p.println("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+			p.println("<link rel=\"stylesheet\" href=\"http://code.jquery.com/mobile/1.1.0/jquery.mobile-1.1.0.min.css\" />");
+			p.println("<script src=\"http://code.jquery.com/jquery-1.6.4.min.js\"></script>");
+			p.println("<script src=\"http://code.jquery.com/mobile/1.1.0/jquery.mobile-1.1.0.min.js\"></script>");
+			
 			p.println("<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=" + charSet + "\">");
 			p.println("<TITLE>Index of " + path + "</TITLE>");
 			p.println("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
 			p.println("</HEAD><BODY>");
-			p.println("<H2>Index of " + path + "</H2>");
 			
-			p.println("<HR>");
+
+			p.println("<div data-role=\"page\" class=\"type-interior\"><div data-role=\"header\" data-theme=\"f\"><h1>Index of " + path + "</h1></div>");
+			
+
+			p.println("<div data-role=\"content\"><div class=\"content-primary\"><ul data-role=\"listview\">");
 			// TODO consider not case sensetive search
 			Arrays.sort(names);
 			long total = 0;
@@ -423,24 +460,24 @@ public class IOCipherFileServlet extends HttpServlet {
 					aFileDate += " ";
 				String aFileDirsuf = (aFile.isDirectory() ? "/" : "");
 				String aFileSuf = (aFile.isDirectory() ? "/" : "");
-				p.println("<div>");
+			
 				
 			//	p.println(aFileType + aFileRead + aFileWrite + aFileExe + "  " + aFileSize + "  " + aFileDate + "  "
 				//		+ "<A HREF=\"" + URLEncoder.encode(names[i], charSet) /* 1.4 */
 					//	+ aFileDirsuf + "\">" + names[i] + aFileSuf + "</A>");
 				
-				p.println("<A HREF=\"" + URLEncoder.encode(names[i], charSet) /* 1.4 */
-								+ aFileDirsuf + "\">" + names[i] + aFileSuf + "</A>"
-						+ " (" + aFileSize + ")"		
+				p.println("<li><A HREF=\"" + URLEncoder.encode(names[i], charSet) /* 1.4 */
+								+ aFileDirsuf + "\" target=\"_new\">" + names[i] + aFileSuf 
+						+ " (" + aFileSize + ")"+ "</A>"
+						+ "</li>"
 						);
 						
-				p.println("</div>");
 				
 			}
 			
-			p.println("<HR>");
+			p.println("</ul>");
 		//	p.print(Serve.Identification.serverIdHtml);
-			p.println("</BODY></HTML>");
+			p.println("</div></div>");
 			p.flush();
 		}
 		out.close();

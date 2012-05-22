@@ -84,8 +84,10 @@ public class FileServlet extends HttpServlet {
 
 	protected String charSet = Serve.UTF8;// "iso-8859-1";
 
-	private static final boolean logenabled = false;
+	private static final boolean logenabled = true;
 
+	private File basePath;
+	
 	//	 true;
 
 	private Method canExecute, getFreeSpace; // TODO implement free space
@@ -93,7 +95,10 @@ public class FileServlet extends HttpServlet {
 	private boolean useCompression;
 
 	// / Constructor.
-	public FileServlet() {
+	public FileServlet(File basePath) {
+		
+		this.basePath = basePath;
+		
 		try {
 			canExecute = File.class.getMethod("canExecute", Utils.EMPTY_CLASSES);
 		} catch (SecurityException e) {
@@ -111,8 +116,8 @@ public class FileServlet extends HttpServlet {
 	// @param throttles filename containing throttle settings
 	// @param charset used for displaying directory page
 	// @see ThrottledOutputStream
-	public FileServlet(String throttles, String charset) throws IOException {
-		this();
+	public FileServlet(File basePath, String throttles, String charset) throws IOException {
+		this(basePath);
 		if (charset != null)
 			this.charSet = charset;
 		readThrottles(throttles);
@@ -350,13 +355,21 @@ public class FileServlet extends HttpServlet {
 			}
 			PrintStream p = new PrintStream(new BufferedOutputStream(out), false, charSet); // 1.4
 			p.println("<HTML><HEAD>");
+			p.println("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+			p.println("<link rel=\"stylesheet\" href=\"http://code.jquery.com/mobile/1.1.0/jquery.mobile-1.1.0.min.css\" />");
+			p.println("<script src=\"http://code.jquery.com/jquery-1.6.4.min.js\"></script>");
+			p.println("<script src=\"http://code.jquery.com/mobile/1.1.0/jquery.mobile-1.1.0.min.js\"></script>");
+			
 			p.println("<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=" + charSet + "\">");
 			p.println("<TITLE>Index of " + path + "</TITLE>");
 			p.println("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
 			p.println("</HEAD><BODY>");
-			p.println("<H2>Index of " + path + "</H2>");
 			
-			p.println("<HR>");
+
+			p.println("<div data-role=\"page\" class=\"type-interior\"><div data-role=\"header\" data-theme=\"f\"><h1>Index of " + path + "</h1></div>");
+			
+
+			p.println("<div data-role=\"content\"><div class=\"content-primary\"><ul data-role=\"listview\">");
 			// TODO consider not case sensetive search
 			Arrays.sort(names);
 			long total = 0;
@@ -388,29 +401,28 @@ public class FileServlet extends HttpServlet {
 					aFileDate += " ";
 				String aFileDirsuf = (aFile.isDirectory() ? "/" : "");
 				String aFileSuf = (aFile.isDirectory() ? "/" : "");
-				p.println("<div>");
+			
 				
 			//	p.println(aFileType + aFileRead + aFileWrite + aFileExe + "  " + aFileSize + "  " + aFileDate + "  "
 				//		+ "<A HREF=\"" + URLEncoder.encode(names[i], charSet) /* 1.4 */
 					//	+ aFileDirsuf + "\">" + names[i] + aFileSuf + "</A>");
 				
-				p.println("<A HREF=\"" + URLEncoder.encode(names[i], charSet) /* 1.4 */
-								+ aFileDirsuf + "\">" + names[i] + aFileSuf + "</A>"
-						+ " (" + aFileSize + ")"		
+				p.println("<li><A HREF=\"" + URLEncoder.encode(names[i], charSet) /* 1.4 */
+								+ aFileDirsuf + "\" target=\"_new\">" + names[i] + aFileSuf 
+						+ " (" + aFileSize + ")"+ "</A>"
+						+ "</li>"
 						);
 						
-				p.println("</div>");
 				
 			}
 			
-			p.println("<HR>");
+			p.println("</ul>");
 		//	p.print(Serve.Identification.serverIdHtml);
-			p.println("</BODY></HTML>");
+			p.println("</div></div>");
 			p.flush();
 		}
 		out.close();
 	}
-
 	/**
 	 * 
 	 * @param req
