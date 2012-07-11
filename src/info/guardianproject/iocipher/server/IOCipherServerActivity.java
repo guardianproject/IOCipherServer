@@ -42,7 +42,10 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
 import android.net.Uri;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -172,7 +175,7 @@ public class IOCipherServerActivity extends SherlockActivity {
             
     		try
     		{
-    			mService.startServer(mWsPort, mWsUseSSL, getMyAddress(), adminPwd);
+    			mService.startServer(mWsPort, mWsUseSSL, getNetworkAddress(), adminPwd);
 
     	    	showStatus();
     		}
@@ -255,7 +258,7 @@ public class IOCipherServerActivity extends SherlockActivity {
     	TextView tv = (TextView)findViewById(R.id.textStatus);
     	StringBuffer msg = new StringBuffer();
     	
-    	String ip = getMyAddress();
+    	String ip = getNetworkAddress();
     	
     	msg.append("Wifi IP: ").append(ip);
     	msg.append("\n\n");
@@ -329,98 +332,30 @@ public class IOCipherServerActivity extends SherlockActivity {
 	
 		
 	}
+	
+	private String getNetworkAddress() {
+		ConnectivityManager connMgr = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
 
-    private String getMyAddress() {
-        
-    	//WifiManager wifi = (WifiManager)getSystemService( Context.WIFI_SERVICE );
+		final android.net.NetworkInfo wifi = connMgr.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
 
-        //WifiInfo connectionInfo = wifi.getConnectionInfo();
-        InetAddress address = null;
-        
-        Log.w(TAG, "Not connected to wifi.  This may not work.");
-        // Get the IP the usual Java way
-        try {
-            for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
-                NetworkInterface intf = en.nextElement();
-                for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
-                    InetAddress inetAddress = enumIpAddr.nextElement();
-                    if (!inetAddress.isLoopbackAddress()) {
-                        return inetAddress.getHostAddress();
-                    }
-                }
-            }        
-        } catch (SocketException e) {
-            Log.e(TAG, "while enumerating interfaces", e);
-            return null;
-        }
-       
-     
-        
-        if (address == null || (address.getAddress() != null  && address.getHostAddress().equals("0.0.0.0")))
-        {
+		final android.net.NetworkInfo mobile = connMgr.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
 
-        	//# ifconfig eth0
-        	try
-        	{
-        		String ipcmd = "netstat";
-        		
-        		Process proc = Runtime.getRuntime().exec(ipcmd);
-        		
-        		BufferedReader br = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-        		String line = null;
-        		
-        		/*Proto Recv-Q Send-Q Local Address          Foreign Address        State
-tcp        0      0 127.0.0.1:5037         0.0.0.0:*              LISTEN
-tcp        0      0 0.0.0.0:8080           0.0.0.0:*              LISTEN
-tcp        0      0 0.0.0.0:2006           0.0.0.0:*              LISTEN
-tcp        0      0 0.0.0.0:1212           0.0.0.0:*              LISTEN
-udp        0      0 172.29.149.193:698     0.0.0.0:*             
-udp        0      0 0.0.0.0:698            0.0.0.0:*             
-			*/
-        		String wifiIp = null;
-        		
-        		while ((line = br.readLine()) != null)
-        		{
-        			if (!line.contains("0.0.0.0"))
-        			{
-        				StringTokenizer st = new StringTokenizer(line," ");
-        				String linePart;
-        				
-        				while (st.hasMoreTokens())
-        				{
-        					linePart = st.nextToken();
-        					
-        					if (!linePart.startsWith("0.0.0.0"))
-        						wifiIp = linePart.split(":")[0];
-        				
-        				}
-        				
-        			
-        			}
-        					
-        		}
-        		
-        		if (wifiIp != null)
-        		{
-	        		Log.d(TAG,"got wifi IP from ifconfig: " + wifiIp);
-	        		
-	        		
-	        		return wifiIp;
-        		}	
-        	}
-        	catch (Exception e)
-        	{
-        		 Log.e(TAG, "unknown shell exception when looking up ip address",e);
-                 return null;
-        	}
-//        	/getMyAddress
-        	
-        			
-        }
-        
-        return null;
-    }
-    
+		if (wifi.isAvailable()) {
+
+			WifiManager myWifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
+			WifiInfo myWifiInfo = myWifiManager.getConnectionInfo();
+			int ip = myWifiInfo.getIpAddress();
+			String ipString = android.text.format.Formatter.formatIpAddress(ip);
+			Log.w(TAG, "Wifi address: " + ipString);
+			return ipString;
+		} else if (mobile.isAvailable()) {
+			Log.w(TAG, "No wifi available (mobile, yes)");
+		} else {
+			Log.w(TAG, "No network available");
+		}
+		return null;
+	}
+
     public static byte byteOfInt(int value, int which) {
         int shift = which * 8;
         return (byte)(value >> shift); 
